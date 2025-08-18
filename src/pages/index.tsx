@@ -423,7 +423,7 @@ export default function Home() {
               <div className="flex flex-col gap-[10px] order-1 md:order-2 w-full md:w-auto">
                 {/* GitHub贡献热力图 */}
                 <div className="w-full overflow-x-auto">
-                  <GitHubHeatmap username="996wuxian" year={2025} />
+                  <GitHubHeatmap username="Tianze-ya" year={2025} />
                 </div>
 
                 <div className="bg-[rgba(0,0,0,.3)] rounded-[5px] p-[10px] text-[#fff] text-[14px] gap-[10px] flex flex-col">
