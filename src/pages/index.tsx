@@ -59,7 +59,7 @@ export default function Home() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const fullText = "Hello, I'm wuxian";
+  const fullText = "Hello, I'm Tianze";
 
   // 打字机动画效果
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function Home() {
 
   // 添加GitHub和QQ点击处理函数
   const handleGithubClick = () => {
-    window.open("https://github.com/996wuxian", "_blank");
+    window.open("https://github.com/Tianze-ya", "_blank");
   };
 
   const handleQQClick = () => {
@@ -197,8 +197,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>首页 - wuxian&apos;s web</title>
-        <meta name="description" content="wuxian的个人网站首页" />
+        <title>首页 - Tianze-ya Blog</title>
+        <meta name="description" content="Tianze的个人网站首页" />
       </Head>
       <div className="relative">
         {/* 弹窗组件 */}
@@ -285,23 +285,25 @@ export default function Home() {
                     <span className="animate-pulse text-[#3d85a9]">|</span>
                   </span>
                 </div>
+                {/*
                 <div className="text-shadow-sm text-[#fff] text-[14px] md:text-[16px]">
                   <span className="bg-gradient-to-br from-[#1b2c55] to-[#3d85a9] bg-clip-text text-transparent text-[16px] md:text-[18px]">
                     Front-end
                   </span>{" "}
                   development (前端开发工程师)
                 </div>
+                */}
                 <div className="text-shadow-sm text-[#fff] text-[14px] md:text-[16px]">
                   <span className="bg-gradient-to-br from-[#1b2c55] to-[#3d85a9] bg-clip-text text-transparent text-[16px] md:text-[18px]">
-                    25
+                    20
                   </span>{" "}
-                  years old (25岁)
+                  years old (20岁)
                 </div>
                 <div className="text-shadow-sm text-[#fff] text-[14px] md:text-[16px]">
                   <span className="bg-gradient-to-br from-[#1b2c55] to-[#3d85a9] bg-clip-text text-transparent text-[16px] md:text-[18px]">
-                    2.5
+                    2
                   </span>{" "}
-                  work experience (2.5年工作经验)
+                  experience (2年经验)
                 </div>
                 <div className="flex mt-[10px] gap-[10px] justify-center md:justify-start">
                   <div
@@ -482,7 +484,7 @@ export default function Home() {
                     </Link>
                   </div>
                   <div className="text-[12px] md:text-[14px]">
-                    2025年开始持续更新中...
+                    持续更新中...
                   </div>
                 </div>
               </div>
@@ -499,7 +501,7 @@ export default function Home() {
               <SvgIcon name="right" width={20} height={20} color="#fff" />
             </Link>
           </div>
-        </div>
+        </div>  
       </div>
     </>
   );

@@ -117,8 +117,8 @@ export default function Works() {
   return (
     <>
       <Head>
-        <title>作品集 - wuxian&apos;s web</title>
-        <meta name="description" content="wuxian的作品集展示页面" />
+        <title>作品集 - Tianze-ya Blog</title>
+        <meta name="description" content="Tianze的作品集展示页面" />
       </Head>
 
       {/* 图片弹窗 */}
