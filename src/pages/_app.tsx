@@ -28,15 +28,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     smile: false,
   });
 
-  // 添加谢谢你动画状态
-  const [showThanks, setShowThanks] = useState<Record<ReactionType, boolean>>({
-    like: false,
-    cheer: false,
-    celebrate: false,
-    appreciate: false,
-    smile: false,
-  });
-
   // 加载评论数量和点赞数量
   useEffect(() => {
     const loadCounts = async () => {
@@ -75,20 +66,6 @@ function Layout({ children }: { children: React.ReactNode }) {
         [type]: true,
       }));
       localStorage.setItem(`hasReacted_${type}`, "true");
-
-      // 显示谢谢你动画
-      setShowThanks((prev) => ({
-        ...prev,
-        [type]: true,
-      }));
-
-      // 1秒后隐藏动画
-      setTimeout(() => {
-        setShowThanks((prev) => ({
-          ...prev,
-          [type]: false,
-        }));
-      }, 2000);
     } catch (error) {
       console.error("点赞失败:", error);
     }
