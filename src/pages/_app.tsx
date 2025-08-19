@@ -55,22 +55,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     loadCounts();
   }, []);
 
-  // 处理点赞
-  const handleReaction = async (type: ReactionType) => {
-    if (hasReacted[type]) return;
-
-    try {
-      const result = await reactionAPI.addReaction(type);
-      setHasReacted((prev) => ({
-        ...prev,
-        [type]: true,
-      }));
-      localStorage.setItem(`hasReacted_${type}`, "true");
-    } catch (error) {
-      console.error("点赞失败:", error);
-    }
-  };
-
   const handleCommentClick = () => {
     setIsCommentOpen(true);
   };
