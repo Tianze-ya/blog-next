@@ -91,7 +91,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
           </defs>
         </svg>
 
-        {/* w */}
+        {/* T - 修正为传统的T字母 */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -105,51 +105,9 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
             strokeLinecap="round"
             strokeWidth="8"
             stroke="url(#b)"
-            d="M 4,8 L 16,48 L 28,12 L 40,48 L 52,8"
+            d="M 12,12 L 52,12 M 32,12 L 32,52"
             className="dash"
-            id="w"
-            pathLength="360"
-          />
-        </svg>
-
-        {/* i */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 64 64"
-          height="64"
-          width="64"
-          className="inline-block"
-        >
-          <path
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            strokeWidth="8"
-            stroke="url(#c)"
-            d="M 12,8 L 12,40 Q 12,52 24,52 L 40,52 Q 52,52 52,40 L 52,8"
-            className="dash"
-            id="u1"
-            pathLength="360"
-          />
-        </svg>
-
-        {/* X */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 64 64"
-          height="64"
-          width="64"
-          className="inline-block"
-        >
-          <path
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            strokeWidth="8"
-            stroke="url(#d)"
-            d="M 12,12 L 52,52 M 52,12 L 12,52"
-            className="dash"
-            id="x"
+            id="T"
             pathLength="360"
           />
         </svg>
@@ -167,7 +125,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
             strokeLinejoin="round"
             strokeLinecap="round"
             strokeWidth="8"
-            stroke="url(#e)"
+            stroke="url(#c)"
             d="M 20,12 L 44,12 M 32,12 L 32,52 M 20,52 L 44,52"
             className="dash"
             id="i"
@@ -188,7 +146,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
             strokeLinejoin="round"
             strokeLinecap="round"
             strokeWidth="8"
-            stroke="url(#f)"
+            stroke="url(#d)"
             d="M 12,52 L 32,12 L 52,52 M 20,36 L 44,36"
             className="dash"
             id="a"
@@ -209,10 +167,52 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
             strokeLinejoin="round"
             strokeLinecap="round"
             strokeWidth="8"
-            stroke="url(#g)"
+            stroke="url(#e)"
             d="M 12,52 L 12,12 L 52,52 L 52,12"
             className="dash"
             id="n"
+            pathLength="360"
+          />
+        </svg>
+
+        {/* Z - 新增Z字母 */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 64 64"
+          height="64"
+          width="64"
+          className="inline-block"
+        >
+          <path
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeWidth="8"
+            stroke="url(#f)"
+            d="M 12,12 L 52,12 L 12,52 L 52,52"
+            className="dash"
+            id="z"
+            pathLength="360"
+          />
+        </svg>
+
+        {/* E - 新增E字母 */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 64 64"
+          height="64"
+          width="64"
+          className="inline-block"
+        >
+          <path
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeWidth="8"
+            stroke="url(#g)"
+            d="M 12,12 L 52,12 L 12,12 L 12,52 L 52,52 M 12,32 L 40,32"
+            className="dash"
+            id="e"
             pathLength="360"
           />
         </svg>
