@@ -9,7 +9,6 @@ import SvgIcon from "@/components/SvgIcon";
 import {
   commentAPI,
   reactionAPI,
-  ReactionType,
 } from "../../service/api/comment";
 import { useRouter } from "next/router";
 
