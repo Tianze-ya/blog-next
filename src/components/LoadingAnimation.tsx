@@ -10,7 +10,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
       <div className="loader">
-        {/* 渐变定义 - 将旋转动画从8秒改为9秒 */}
+        {/* 渐变定义 */}
         <svg height="0" width="0" viewBox="0 0 64 64" className="absolute">
           <defs xmlns="http://www.w3.org/2000/svg">
             <linearGradient id="b" x1="0" y1="62" x2="0" y2="2">
@@ -53,11 +53,85 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
           </defs>
         </svg>
 
-        {/* 各字母SVG保持不变... */}
+        {/* T - 第一个字母 */}
+        <svg width="64" height="64" viewBox="0 0 64 64" className="inline-block">
+          <path
+            stroke="url(#b)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M 4,8 L 16,48 L 28,12 L 40,48 L 52,8"
+            className="dash"
+            pathLength="360"
+          />
+        </svg>
 
+        {/* I - 第二个字母 */}
+        <svg width="64" height="64" viewBox="0 0 64 64" className="inline-block">
+          <path
+            stroke="url(#c)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M 20,12 L 44,12 M 32,12 L 32,52 M 20,52 L 44,52"
+            className="dash"
+            pathLength="360"
+          />
+        </svg>
+
+        {/* A - 第三个字母 */}
+        <svg width="64" height="64" viewBox="0 0 64 64" className="inline-block">
+          <path
+            stroke="url(#d)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M 12,52 L 32,12 L 52,52 M 20,36 L 44,36"
+            className="dash"
+            pathLength="360"
+          />
+        </svg>
+
+        {/* N - 第四个字母 */}
+        <svg width="64" height="64" viewBox="0 0 64 64" className="inline-block">
+          <path
+            stroke="url(#e)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M 12,52 L 12,12 L 52,52 L 52,12"
+            className="dash"
+            pathLength="360"
+          />
+        </svg>
+
+        {/* Z - 第五个字母 */}
+        <svg width="64" height="64" viewBox="0 0 64 64" className="inline-block">
+          <path
+            stroke="url(#f)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M 12,12 L 52,12 L 12,52 L 52,52"
+            className="dash"
+            pathLength="360"
+          />
+        </svg>
+
+        {/* E - 第六个字母 */}
+        <svg width="64" height="64" viewBox="0 0 64 64" className="inline-block">
+          <path
+            stroke="url(#g)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M 12,12 L 52,12 L 12,12 L 12,52 L 52,52 M 12,32 L 40,32"
+            className="dash"
+            pathLength="360"
+          />
+        </svg>
       </div>
 
-      {/* 将CSS动画从2秒改为3秒 */}
       <style jsx>{`
         .loader {
           display: flex;
@@ -66,8 +140,8 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ isVisible }) => {
         }
         .dash {
           animation: 
-            dashArray 3s ease-in-out infinite, {/* 从2秒改为3秒 */}
-            dashOffset 3s linear infinite;     {/* 从2秒改为3秒 */}
+            dashArray 3s ease-in-out infinite,
+            dashOffset 3s linear infinite;
         }
         @keyframes dashArray {
           0% { stroke-dasharray: 0 1 359 0; }
