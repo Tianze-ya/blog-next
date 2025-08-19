@@ -32,7 +32,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadCounts = async () => {
       try {
-        const [commentsData, reactionsData] = await Promise.all([
+        const [commentsData] = await Promise.all([
           commentAPI.getComments(),
           reactionAPI.getReactions(),
         ]);
