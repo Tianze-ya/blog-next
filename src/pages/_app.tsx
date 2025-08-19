@@ -20,13 +20,6 @@ function Layout({ children }: { children: React.ReactNode }) {
   const [isCommentOpen, setIsCommentOpen] = useState(false);
 
   const [commentCount, setCommentCount] = useState(0);
-  const [hasReacted, setHasReacted] = useState<Record<ReactionType, boolean>>({
-    like: false,
-    cheer: false,
-    celebrate: false,
-    appreciate: false,
-    smile: false,
-  });
 
   // 加载评论数量和点赞数量
   useEffect(() => {
@@ -37,16 +30,6 @@ function Layout({ children }: { children: React.ReactNode }) {
           reactionAPI.getReactions(),
         ]);
         setCommentCount(commentsData.length);
-
-        // 检查本地存储是否已点赞
-        const reacted: Record<ReactionType, boolean> = {
-          like: localStorage.getItem("hasReacted_like") === "true",
-          cheer: localStorage.getItem("hasReacted_cheer") === "true",
-          celebrate: localStorage.getItem("hasReacted_celebrate") === "true",
-          appreciate: localStorage.getItem("hasReacted_appreciate") === "true",
-          smile: localStorage.getItem("hasReacted_smile") === "true",
-        };
-        setHasReacted(reacted);
       } catch (error) {
         console.error("加载数据失败:", error);
       }
