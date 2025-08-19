@@ -341,7 +341,7 @@ export default function Home() {
                           height={20}
                           color="#fff"
                         />
-                        广州番禺区
+                        安庆
                       </div>
                       <div className="flex items-center gap-[5px]">
                         <SvgIcon
@@ -350,7 +350,7 @@ export default function Home() {
                           height={20}
                           color="#fff"
                         />
-                        在职
+                        学生
                       </div>
                     </div>
                     <div className="bg-[rgba(0,0,0,.3)] rounded-[5px] p-[10px] text-[#fff] text-[14px] gap-[10px] flex flex-col flex-1">
@@ -361,7 +361,7 @@ export default function Home() {
                           height={20}
                           color="#fff"
                         />
-                        广西
+                        安徽
                       </div>
                       <div className="flex items-center gap-[5px]">
                         <SvgIcon
