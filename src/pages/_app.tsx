@@ -10,7 +10,6 @@ import {
   commentAPI,
   reactionAPI,
   ReactionType,
-  ReactionCounts,
 } from "../../service/api/comment";
 import { useRouter } from "next/router";
 
@@ -21,13 +20,6 @@ function Layout({ children }: { children: React.ReactNode }) {
   const [isCommentOpen, setIsCommentOpen] = useState(false);
 
   const [commentCount, setCommentCount] = useState(0);
-  const [reactionCounts, setReactionCounts] = useState<ReactionCounts>({
-    like: 0,
-    cheer: 0,
-    celebrate: 0,
-    appreciate: 0,
-    smile: 0,
-  });
   const [hasReacted, setHasReacted] = useState<Record<ReactionType, boolean>>({
     like: false,
     cheer: false,
@@ -54,7 +46,6 @@ function Layout({ children }: { children: React.ReactNode }) {
           reactionAPI.getReactions(),
         ]);
         setCommentCount(commentsData.length);
-        setReactionCounts(reactionsData);
 
         // 检查本地存储是否已点赞
         const reacted: Record<ReactionType, boolean> = {
@@ -79,10 +70,6 @@ function Layout({ children }: { children: React.ReactNode }) {
 
     try {
       const result = await reactionAPI.addReaction(type);
-      setReactionCounts((prev) => ({
-        ...prev,
-        [type]: result.count,
-      }));
       setHasReacted((prev) => ({
         ...prev,
         [type]: true,
