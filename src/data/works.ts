@@ -21,10 +21,10 @@ export const worksData: WorkItem[] = [
   {
     title: "Tianze-blog",
     description:
-      "基于Next.js开发的个人介绍网站。",
+      "基于Hexo开发的个人博客网站",
     image: "/images/work1.jpg",
-    tech: ["Python", "C++", "Rust"],
-    link: "#",
-    features: ["个人介绍", "作品集", "喜好", "留言"],
+    tech: ["NodeJS"],
+    link: "https://github.com/Tianze-ya/blog",
+    features: ["个人介绍", "美观"],
   },
 ];

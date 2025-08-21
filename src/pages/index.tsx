@@ -145,20 +145,9 @@ export default function Home() {
   };
 
   const tags = [
-    {
-      name: "做饭",
-    },
-    {
-      name: "摄影",
-    },
-    {
-      name: "五哈",
-    },
+
     {
       name: "美食",
-    },
-    {
-      name: "沧元图",
     },
     {
       name: "音乐",
@@ -167,28 +156,7 @@ export default function Home() {
       name: "蜡笔小新",
     },
     {
-      name: "英雄联盟手游",
-    },
-    {
-      name: "天空中的歌",
-    },
-    {
       name: "鲜花",
-    },
-    {
-      name: "枕刀歌",
-    },
-    {
-      name: "镖人",
-    },
-    {
-      name: "不良人",
-    },
-    {
-      name: "不良人天罡传",
-    },
-    {
-      name: "鬼灭之刃",
     },
   ];
 
