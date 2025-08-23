@@ -10,17 +10,23 @@ interface BlogArticle {
   date: string;
   tags: string[];
   content: string;
-  readTime: string;
   filename: string;
-  category: string; // 新增分类字段
+  category: string;
 }
 
 interface BlogResponse {
   articles: BlogArticle[];
-  categories: string[]; // 新增分类列表
+  categories: string[];
 }
 
-// 递归读取文件夹
+function formatDate(date: Date | string): string {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function readBlogsRecursively(dir: string, baseDir: string): BlogArticle[] {
   const articles: BlogArticle[] = [];
   const items = fs.readdirSync(dir);
@@ -30,12 +36,11 @@ function readBlogsRecursively(dir: string, baseDir: string): BlogArticle[] {
     const stat = fs.statSync(fullPath);
 
     if (stat.isDirectory()) {
-      // 递归读取子文件夹
       articles.push(...readBlogsRecursively(fullPath, baseDir));
     } else if (item.endsWith(".md") && item !== "count.md") {
-      // 计算相对于blogs目录的分类路径
       const relativePath = path.relative(baseDir, dir);
-      const category = relativePath || "root";
+      // 只取第一级目录作为分类名称
+      const category = relativePath.split(path.sep)[0] || "根目录";
 
       const fileContents = fs.readFileSync(fullPath, "utf8");
       const { data, content } = matter(fileContents);
@@ -43,11 +48,10 @@ function readBlogsRecursively(dir: string, baseDir: string): BlogArticle[] {
       articles.push({
         id: `${category}-${item}`,
         title: data.title || item.replace(".md", ""),
-        description: data.description || extractDescription(content),
-        date: data.date || new Date().toISOString().split("T")[0],
+        description: data.description || extractDescription(content, data.title || item.replace(".md", "")),
+        date: formatDate(data.date || new Date()),
         tags: data.tags || ["未分类"],
         content,
-        readTime: data.readTime || "5 分钟阅读",
         filename: item,
         category: category === "root" ? "根目录" : category,
       });
@@ -57,12 +61,22 @@ function readBlogsRecursively(dir: string, baseDir: string): BlogArticle[] {
   return articles;
 }
 
-function extractDescription(content: string): string {
+function extractDescription(content: string, title: string): string {
+  // 1. 优先提取简介部分
   const introMatch = content.match(/##\s*简介\s*\n([\s\S]*?)(?=\n##|\n#|$)/);
-  if (introMatch && introMatch[1]) {
-    return introMatch[1].trim().replace(/\n/g, " ").substring(0, 150) + "...";
+  if (introMatch && introMatch[1].trim()) {
+    return introMatch[1].trim().replace(/\n/g, " ").substring(0, 150) + (introMatch[1].length > 150 ? "..." : "");
   }
-  return "暂无描述";
+
+  // 2. 提取第一段非标题、非代码块的文本
+  const lines = content.split('\n');
+  for (const line of lines) {
+    if (!line.trim() || line.startsWith('#') || line.startsWith('```')) continue;
+    return line.trim().substring(0, 150) + (line.length > 150 ? "..." : "");
+  }
+
+  // 3. 默认返回标题
+  return title;
 }
 
 export default function handler(
@@ -72,15 +86,11 @@ export default function handler(
   try {
     const blogsDirectory = path.join(process.cwd(), "src", "blogs");
 
-    // 检查blogs目录是否存在
     if (!fs.existsSync(blogsDirectory)) {
       return res.status(404).json({ error: "blogs目录不存在" });
     }
 
-    // 递归读取所有文章
     const articles = readBlogsRecursively(blogsDirectory, blogsDirectory);
-
-    // 提取所有分类
     const categories = [
       "全部",
       ...Array.from(new Set(articles.map((article) => article.category))),
