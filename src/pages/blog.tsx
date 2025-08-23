@@ -975,7 +975,7 @@ const renderMarkdown = (content: string) => {
     <>
       <Head>
         <title>docs - wuxian&apos;s web</title>
-        <meta name="description" content="分享前端开发经验和技术文章" />
+        <meta name="description" content="分享开发经验和技术文章" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -1080,7 +1080,7 @@ const renderMarkdown = (content: string) => {
                 <div className="mb-4">
                   <div className="max-w-2xl mx-auto">
                     <h1 className="text-[40px] font-bold text-[#fff] text-shadow-sm flex items-end justify-center mb-[10px]">
-                      {selectedArticle ? selectedArticle.filename : "前端 知识库"}
+                      {selectedArticle ? selectedArticle.filename : "知识库"}
                     </h1>
                     <div className="relative">
                       <input

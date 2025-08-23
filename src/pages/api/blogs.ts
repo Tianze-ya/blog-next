@@ -40,7 +40,7 @@ function readBlogsRecursively(dir: string, baseDir: string): BlogArticle[] {
     } else if (item.endsWith(".md") && item !== "count.md") {
       const relativePath = path.relative(baseDir, dir);
       // 只取第一级目录作为分类名称
-      const category = relativePath.split(path.sep)[0] || "根目录";
+      const category = relativePath.split(path.sep)[0] || "全部";
 
       const fileContents = fs.readFileSync(fullPath, "utf8");
       const { data, content } = matter(fileContents);

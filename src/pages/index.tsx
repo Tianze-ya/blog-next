@@ -418,7 +418,7 @@ export default function Home() {
                           color="#fff"
                         />
                       </div>
-                      <span className="text-[12px]">记录前端作品</span>
+                      <span className="text-[12px]">记录作品</span>
                     </Link>
                     <Link
                       href="/blog"
@@ -433,7 +433,7 @@ export default function Home() {
                           color="#fff"
                         />
                       </div>
-                      <span className="text-[12px]">记录前端知识</span>
+                      <span className="text-[12px]">记录知识</span>
                     </Link>
                     <Link
                       href="/chat"
