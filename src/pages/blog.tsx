@@ -133,65 +133,7 @@ const DirectoryItem = React.memo(
 DirectoryItem.displayName = "DirectoryItem";
 
 // 将打字机动画提取为独立组件
-const TypewriterText = ({ text }: { text: string }) => {
-  const [displayText, setDisplayText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    const typeSpeed = 150;
-    const deleteSpeed = 100;
-    const pauseTime = 2000;
-    const restartPause = 1000;
-
-    const timer = setTimeout(
-      () => {
-        if (!isDeleting) {
-          if (currentIndex < text.length) {
-            setDisplayText(text.slice(0, currentIndex + 1));
-            setCurrentIndex(currentIndex + 1);
-          } else {
-            setTimeout(() => setIsDeleting(true), pauseTime);
-          }
-        } else {
-          if (currentIndex > 0) {
-            setDisplayText(text.slice(0, currentIndex - 1));
-            setCurrentIndex(currentIndex - 1);
-          } else {
-            setTimeout(() => setIsDeleting(false), restartPause);
-          }
-        }
-      },
-      isDeleting ? deleteSpeed : typeSpeed
-    );
-
-    return () => clearTimeout(timer);
-  }, [currentIndex, isDeleting, text]);
-
-  return (
-    <span className="inline-block">
-      {displayText.split(" ").map((word, wordIndex) => {
-        if (word === "前端") {
-          return (
-            <span
-              key={wordIndex}
-              className="bg-gradient-to-br from-[#1b2c55] to-[#3d85a9] bg-clip-text text-transparent"
-            >
-              {word}
-            </span>
-          );
-        }
-        return (
-          <span key={wordIndex}>
-            {word}
-            {wordIndex < displayText.split(" ").length - 1 ? " " : ""}
-          </span>
-        );
-      })}
-      <span className="animate-pulse text-[#3d85a9] pl-[10px] pb-[4px]">|</span>
-    </span>
-  );
-};
 
 export default function Blog() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -350,9 +292,10 @@ export default function Blog() {
 
     return () => {
       clearTimeout(timer);
-      const scrollContainer = blogContentRef.current;
-      if (scrollContainer) {
-        scrollContainer.removeEventListener("scroll", handleScroll);
+      // 在清理函数中使用变量存储ref值，避免依赖变化问题
+      const currentScrollContainer = blogContentRef.current;
+      if (currentScrollContainer) {
+        currentScrollContainer.removeEventListener("scroll", handleScroll);
       }
     };
   }, [selectedArticle, loading, articles.length]);
@@ -455,7 +398,7 @@ export default function Blog() {
       const level = levelMatch ? levelMatch[0].length : 1;
       
       // 提取标题文本，处理可能的内联格式
-      let title = heading.replace(/^#+\s+/, "")
+      const title = heading.replace(/^#+\s+/, "")
         .replace(/\*\*(.*?)\*\*/g, '$1')  // 移除粗体标记
         .replace(/\*(.*?)\*/g, '$1')      // 移除斜体标记
         .replace(/`(.*?)`/g, '$1')        // 移除行内代码标记
