@@ -65,27 +65,19 @@ const DirectoryItem = React.memo(
   }) => {
     const isCollapsed = collapsedFolders.has(item.id);
 
-    // 创建缩进线
-    const createIndentation = () => {
-      if (level === 0) return null;
-      
-      return (
-        <div className="absolute left-4 top-4 bottom-0 flex items-start" style={{ marginLeft: `${(level - 1) * 16}px` }}>
-          <div className="h-full w-px bg-gray-800" />
-        </div>
-      );
-    };
-
     if (item.isFolder) {
       return (
-        <div className="relative my-0.5">
-          {level > 0 && createIndentation()}
+        <div className="my-0.5">
           <div
-            className={`flex items-center cursor-pointer rounded-md px-2 py-1 transition-all duration-200 ${isCollapsed ? 'hover:bg-[rgba(255,255,255,.05)]' : 'hover:bg-[rgba(255,255,255,.08)]'}`}
-            style={{ marginLeft: `${level === 0 ? 0 : 16}px` }}
+            className={`flex items-center cursor-pointer rounded-md px-2 py-1 transition-all duration-200 ${isCollapsed ? 'hover:bg-[rgba(255,255,255,.05)]' : 'hover:bg-[rgba(255,255,255,.08)]'
+              }`}
+            style={{ marginLeft: `${level * 16}px` }}
             onClick={() => toggleFolder(item.id)}
           >
-            <div className="flex-shrink-0 mr-1.5 transition-transform duration-200" style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+            <div
+              className="flex-shrink-0 mr-1.5 transition-transform duration-200"
+              style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+            >
               <SvgIcon
                 name="right"
                 width={12}
@@ -99,9 +91,9 @@ const DirectoryItem = React.memo(
               {item.children.length}
             </span>
           </div>
-          
-          {!isCollapsed && (
-            <div className="ml-6 border-l border-gray-800 pl-2 py-0.5 rounded-md bg-[rgba(0,0,0,0.2)]">
+
+          {!isCollapsed && item.children.length > 0 && (
+            <div className="ml-6 border-l border-gray-800 pl-2 py-0.5">
               {item.children.map((child, index) => (
                 <DirectoryItem
                   key={child.id || `${child.name}-${index}`}
@@ -117,13 +109,12 @@ const DirectoryItem = React.memo(
       );
     } else {
       return (
-        <div className="relative my-0.5 group" style={{ marginLeft: `${level * 16}px` }}>
-          <div
-            className="flex items-center rounded-md px-2 py-1 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200 group-hover:bg-[rgba(61,133,169,0.1)] group-hover:border-[rgba(61,133,169,0.3)] border border-transparent"
-          >
-            <span className="text-blue-400 mr-1.5">📄</span>
-            <span className="text-gray-300 text-sm truncate max-w-[200px]">{item.name}</span>
-          </div>
+        <div
+          className="flex items-center rounded-md px-2 py-1 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200 group my-0.5"
+          style={{ marginLeft: `${level * 16}px` }}
+        >
+          <span className="text-blue-400 mr-1.5">📄</span>
+          <span className="text-gray-300 text-sm truncate max-w-[200px]">{item.name}</span>
         </div>
       );
     }
@@ -133,7 +124,6 @@ const DirectoryItem = React.memo(
 DirectoryItem.displayName = "DirectoryItem";
 
 // 将打字机动画提取为独立组件
-
 
 export default function Blog() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -396,7 +386,7 @@ export default function Blog() {
       // 提取标题级别
       const levelMatch = heading.match(/^#+/);
       const level = levelMatch ? levelMatch[0].length : 1;
-      
+
       // 提取标题文本，处理可能的内联格式
       const title = heading.replace(/^#+\s+/, "")
         .replace(/\*\*(.*?)\*\*/g, '$1')  // 移除粗体标记
@@ -407,7 +397,7 @@ export default function Blog() {
 
       // 生成唯一ID，考虑标题内容和位置
       const id = `heading-${index}-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')}`;
-      
+
       return {
         id,
         title,
@@ -459,7 +449,7 @@ export default function Blog() {
     // 先处理HTML标签，将其转换为行内代码格式
     let processed = description
       .replace(/<([^>]+)>/g, '`<$1>`'); // 将HTML标签转换为行内代码
-    
+
     // 移除其他Markdown内联格式，包括原始的行内代码格式
     processed = processed
       .replace(/\*\*(.*?)\*\*/g, '$1')  // 移除粗体标记
@@ -471,7 +461,7 @@ export default function Blog() {
       .replace(/==(.*?)==/g, '$1')      // 移除高亮标记
       .replace(/-(.*?)-/g, '$1')        // 移除带连字符的格式
       .trim();
-    
+
     return processed;
   };
 
@@ -482,32 +472,29 @@ export default function Blog() {
       line = line.replace(/`([^`]+)`/g, '<code class="bg-gray-700 text-gray-200 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
     }
 
-    // 处理变量 ${variable}
-    line = line.replace(/\$\{([^}]+)\}/g, '<code class="bg-gray-700 text-gray-200 px-1 py-0.5 rounded text-sm font-mono">${$1}</code>');
-
     // 处理HTML标签
     // 处理带样式的span标签 <span style="...">text</span>
     line = line.replace(/<span style="([^"]+)">([^<]+)<\/span>/g, (match, style, text) => {
       // 安全处理样式，只允许特定样式
       const allowedStyles = [
-        'color', 'background-color', 'font-size', 'font-weight', 
-        'text-decoration', 'display', 'margin', 'padding', 
-        'border', 'border-radius', 'float', 'clear', 'width', 
+        'color', 'background-color', 'font-size', 'font-weight',
+        'text-decoration', 'display', 'margin', 'padding',
+        'border', 'border-radius', 'float', 'clear', 'width',
         'height', 'text-align', 'line-height'
       ];
-      
+
       const styleObj: Record<string, string> = {};
       const stylePairs = style.split(';');
-      
+
       stylePairs.forEach((pair: string) => {
         const [property, value] = pair.split(':').map(s => s.trim());
         if (property && value && allowedStyles.includes(property)) {
           // 颜色值验证
           if (property === 'color' || property === 'background-color') {
-            if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value) || 
-                /^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/.test(value) ||
-                /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[0-9.]+\s*\)$/.test(value) ||
-                value.match(/^[a-zA-Z]+$/)) {
+            if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value) ||
+              /^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/.test(value) ||
+              /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[0-9.]+\s*\)$/.test(value) ||
+              value.match(/^[a-zA-Z]+$/)) {
               styleObj[property] = value;
             }
           } else {
@@ -515,20 +502,20 @@ export default function Blog() {
           }
         }
       });
-      
+
       const safeStyle = Object.entries(styleObj)
         .map(([prop, val]) => `${prop}: ${val}`)
         .join('; ');
-      
+
       return `<span style="${safeStyle}">${text}</span>`;
     });
-    
+
     // 处理kbd标签 <kbd>text</kbd>
     line = line.replace(/<kbd>([^<]+)<\/kbd>/g, '<kbd class="bg-gray-700 text-gray-200 px-1 py-0.5 rounded text-xs font-mono border border-gray-600">$1</kbd>');
-    
+
     // 处理small标签 <small>text</small>
     line = line.replace(/<small>([^<]+)<\/small>/g, '<small class="text-sm text-gray-400">$1</small>');
-    
+
     // 处理mark标签 <mark>text</mark>
     line = line.replace(/<mark>([^<]+)<\/mark>/g, '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">$1</mark>');
 
@@ -546,9 +533,15 @@ export default function Blog() {
     // 处理高亮 ==text==
     line = line.replace(/==([^=]+)==/g, '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">$1</mark>');
 
+    // 处理裸链接 http:// or https:// or ftp://
+    line = line.replace(
+      /(?<!\()(https?|ftp):\/\/[^\s<>"]+/g,
+      '<a href="$&" class="text-[#3d85a9] hover:underline" target="_blank" rel="noopener noreferrer">$&</a>'
+    );
+
     // 处理链接 [text](url)
     line = line.replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g, 
+      /\[([^\]]+)\]\(([^)]+)\)/g,
       '<a href="$2" class="text-[#3d85a9] hover:underline" target="_blank" rel="noopener noreferrer">$1</a>'
     );
 
@@ -576,373 +569,361 @@ export default function Blog() {
       '<sub class="text-[85%] align-sub">$1</sub>'
     );
 
-    // 处理任务列表 - [x] 和 [ ]
-    line = line.replace(
-      /^- \[x\]\s+(.+)$/gm,
-      '<div class="flex items-center my-1"><span class="w-5 h-5 bg-green-500 rounded-full mr-2 flex items-center justify-center">✓</span><span>$1</span></div>'
-    );
-    line = line.replace(
-      /^- \[ \]\s+(.+)$/gm,
-      '<div class="flex items-center my-1"><span class="w-5 h-5 border border-gray-500 rounded mr-2"></span><span>$1</span></div>'
-    );
-
     return line;
   };
 
-// 渲染 Markdown 内容（增强版）
-const renderMarkdown = (content: string) => {
-  const lines = content.split("\n");
-  const elements: JSX.Element[] = [];
-  let inCodeBlock = false;
-  let inTable = false;
-  let tableRows: string[][] = [];
-  let codeBlockContent = "";
-  let codeLanguage = "";
-  let headingIndex = 0;
-  let inMathBlock = false;
-  let mathContent = "";
-  let inList = false;
-  let listType: "ul" | "ol" = "ul";
-  let listItems: JSX.Element[] = [];
+  // 渲染 Markdown 内容
+  const renderMarkdown = (content: string) => {
+    const lines = content.split("\n");
+    const elements: JSX.Element[] = [];
+    let inCodeBlock = false;
+    let inTable = false;
+    let tableRows: string[][] = [];
+    let codeBlockContent = "";
+    let codeLanguage = "";
+    let headingIndex = 0;
+    let inMathBlock = false;
+    let mathContent = "";
+    let inList = false;
+    let listType: "ul" | "ol" = "ul";
+    let listItems: JSX.Element[] = [];
 
-  // 复制代码功能
-  const copyToClipboard = (text: string) => {
-    const cleanText = text.replace(/\n$/, "");
-    navigator.clipboard
-      .writeText(cleanText)
-      .then(() => {
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 2000);
-      })
-      .catch(console.error);
-  };
+    // 复制代码功能
+    const copyToClipboard = (text: string) => {
+      const cleanText = text.replace(/\n$/, "");
+      navigator.clipboard
+        .writeText(cleanText)
+        .then(() => {
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 2000);
+        })
+        .catch(console.error);
+    };
 
-  // 处理表格行
-  const processTableRow = (line: string) => {
-    const cells = line
-      .split("|")
-      .map(cell => cell.trim())
-      .filter(cell => cell);
-    return cells;
-  };
+    // 处理表格行
+    const processTableRow = (line: string) => {
+      const cells = line
+        .split("|")
+        .slice(1, -1)
+        .map(cell => cell.trim())
+      return cells;
+    };
 
-  // 渲染表格
-  const renderTable = () => {
-    if (tableRows.length < 2) return null;
+    // 渲染
+    const renderTable = () => {
+      if (tableRows.length < 2) return null;
 
-    const headers = tableRows[0];
-    const aligns = tableRows[1].map(cell => {
-      if (cell.startsWith(":") && cell.endsWith(":")) return "center";
-      if (cell.startsWith(":")) return "left";
-      if (cell.endsWith(":")) return "right";
-      return "left";
-    });
+      const headers = tableRows[0];
+      const aligns = tableRows[1].map(cell => {
+        if (cell.startsWith(":") && cell.endsWith(":")) return "center";
+        if (cell.startsWith(":")) return "left";
+        if (cell.endsWith(":")) return "right";
+        return "left";
+      });
 
-    return (
-      <div className="overflow-x-auto my-6">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-800">
-              {headers.map((header, i) => (
-                <th 
-                  key={i}
-                  className={`px-4 py-2 text-left border border-gray-700 ${
-                    aligns[i] === "center" ? "text-center" : 
-                    aligns[i] === "right" ? "text-right" : ""
-                  }`}
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tableRows.slice(2).map((row, rowIndex) => (
-              <tr 
-                key={rowIndex} 
-                className={rowIndex % 2 ? "bg-gray-900" : "bg-gray-800"}
-              >
-                {row.map((cell, cellIndex) => (
-                  <td 
-                    key={cellIndex}
-                    className={`px-4 py-2 border border-gray-700 ${
-                      aligns[cellIndex] === "center" ? "text-center" : 
-                      aligns[cellIndex] === "right" ? "text-right" : ""
-                    }`}
-                    dangerouslySetInnerHTML={{ __html: processInlineFormats(cell) }}
-                  />
+      return (
+        <div className="overflow-x-auto my-6">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-800">
+                {headers.map((header, i) => (
+                  <th
+                    key={i}
+                    className={`px-4 py-2 text-left border border-gray-700 ${aligns[i] === "center" ? "text-center" :
+                      aligns[i] === "right" ? "text-right" : ""
+                      } text-gray-100 dark:text-gray-100`}
+                  >
+                    {header}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
-  // 渲染数学公式
-  const renderMath = (math: string, displayMode: boolean) => {
-    return (
-      <div className={`my-4 ${displayMode ? "" : "inline-block"}`}>
-        <div className="bg-gray-800 rounded p-4 overflow-x-auto">
-          <pre className="text-gray-300 font-mono text-sm">
-            {math}
-          </pre>
+            </thead>
+            <tbody>
+              {tableRows.slice(2).map((row, rowIndex) => (
+                <tr
+                  key={rowIndex}
+                  className={rowIndex % 2 ? "bg-gray-900" : "bg-gray-800"}
+                >
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className={`px-4 py-2 border border-gray-700 ${aligns[cellIndex] === "center" ? "text-center" :
+                        aligns[cellIndex] === "right" ? "text-right" : ""
+                        } text-gray-900 dark:text-gray-100`}
+                      dangerouslySetInnerHTML={{ __html: processInlineFormats(cell) }}
+                    />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-    );
-  };
+      );
+    };
 
-  // 渲染列表的函数
-  const renderList = () => {
-    if (listItems.length === 0) return null;
-    
-    const listElement = React.createElement(
-      listType,
-      {
-        key: elements.length,
-        className: `mb-4 pl-6 ${listType === "ul" ? "list-disc" : "list-decimal"}`,
-      },
-      listItems
-    );
-    
-    listItems = [];
-    inList = false;
-    
-    return listElement;
-  };
-
-  lines.forEach((line, index) => {
-    // 数学公式块处理
-    if (line.startsWith("$$")) {
-      if (!inMathBlock) {
-        inMathBlock = true;
-        mathContent = "";
-      } else {
-        inMathBlock = false;
-        elements.push(renderMath(mathContent, true));
-      }
-      return;
-    }
-
-    if (inMathBlock) {
-      mathContent += line + "\n";
-      return;
-    }
-
-    // 表格处理
-    if (line.trim().startsWith("|") && line.includes("|")) {
-      if (!inTable) {
-        inTable = true;
-        tableRows = [];
-      }
-      tableRows.push(processTableRow(line));
-      return;
-    } else if (inTable) {
-      inTable = false;
-      const tableElement = renderTable();
-      if (tableElement) elements.push(tableElement);
-    }
-
-    // 代码块处理
-    if (line.startsWith("```")) {
-      if (!inCodeBlock) {
-        inCodeBlock = true;
-        codeBlockContent = "";
-        codeLanguage = line.replace("```", "").trim() || "plaintext";
-      } else {
-        inCodeBlock = false;
-        const currentCodeContent = codeBlockContent;
-        const currentLanguage = codeLanguage;
-
-        // 处理代码块中的``格式，保留原样
-        const processedCodeContent = currentCodeContent
-          .replace(/`/g, '`')
-          .replace(/\$/g, '$');
-
-        elements.push(
-          <div key={`code-${index}`} className="bg-gray-900 rounded-lg my-4 overflow-hidden relative group">
-            <div className="flex justify-between items-center px-4 py-2 bg-gray-800 border-b border-gray-700">
-              <span className="text-xs text-gray-400 uppercase font-mono">
-                {currentLanguage}
-              </span>
-              <button
-                onClick={() => copyToClipboard(currentCodeContent)}
-                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded flex items-center gap-1"
-                title="复制代码"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                复制
-              </button>
-            </div>
-            <SyntaxHighlighter
-              language={currentLanguage === "plaintext" ? "text" : currentLanguage}
-              style={vscDarkPlus}
-              customStyle={{
-                margin: 0,
-                padding: "16px",
-                background: "transparent",
-                fontSize: "14px",
-              }}
-              showLineNumbers={true}
-              wrapLines={true}
-            >
-              {processedCodeContent}
-            </SyntaxHighlighter>
+    // 渲染数学公式
+    const renderMath = (math: string, displayMode: boolean) => {
+      return (
+        <div className={`my-4 ${displayMode ? "" : "inline-block"}`}>
+          <div className="bg-gray-800 rounded p-4 overflow-x-auto">
+            <pre className="text-gray-300 font-mono text-sm">
+              {math}
+            </pre>
           </div>
-        );
-      }
-      return;
-    }
+        </div>
+      );
+    };
 
-    if (inCodeBlock) {
-      // 在代码块中，直接保留``和$符号原样
-      codeBlockContent += (codeBlockContent ? "\n" : "") + line;
-      return;
-    }
+    // 渲染列表的函数
+    const renderList = () => {
+      if (listItems.length === 0) return null;
 
-    // 列表处理 - 改进版
-    if ((line.startsWith("- ") || line.match(/^\d+\. /)) && !inCodeBlock && !inTable && !line.startsWith("> ")) {
-      const isOrdered = line.match(/^\d+\. /);
-      const currentListType = isOrdered ? "ol" : "ul";
-      
-      // 处理列表项中的内联格式
-      const listItemContent = line.replace(/^[-|\d+\.]\s+/, "");
-      const processedContent = processInlineFormats(listItemContent);
-      
-      const listItem = (
-        <li 
-          key={listItems.length} 
-          className="mb-1"
-          dangerouslySetInnerHTML={{ __html: processedContent }}
-        />
+      const listElement = React.createElement(
+        listType,
+        {
+          key: elements.length,
+          className: `mb-4 pl-6 ${listType === "ul" ? "list-disc" : "list-decimal"} text-gray-900 dark:text-gray-100`,
+        },
+        listItems
       );
 
-      if (inList && listType === currentListType) {
-        // 继续当前列表
-        listItems.push(listItem);
-      } else {
-        // 结束上一个列表并开始新列表
-        if (inList) {
-          const listElement = renderList();
-          if (listElement) elements.push(listElement);
-        }
-        inList = true;
-        listType = currentListType;
-        listItems.push(listItem);
-      }
-      return;
-    }
+      listItems = [];
+      inList = false;
 
-    // 如果不是列表项但之前在处理列表，则结束列表
-    if (inList && line.trim() && !line.startsWith("  ") && !line.startsWith("\t")) {
+      return listElement;
+    };
+
+    lines.forEach((line, index) => {
+      // 数学公式块处理
+      if (line.startsWith("$$")) {
+        if (!inMathBlock) {
+          inMathBlock = true;
+          mathContent = "";
+        } else {
+          inMathBlock = false;
+          elements.push(renderMath(mathContent, true));
+        }
+        return;
+      }
+
+      if (inMathBlock) {
+        mathContent += line + "\n";
+        return;
+      }
+
+      // 表格处理
+      if (line.trim().startsWith("|") && line.includes("|")) {
+        if (!inTable) {
+          inTable = true;
+          tableRows = [];
+        }
+        tableRows.push(processTableRow(line));
+        return;
+      } else if (inTable) {
+        inTable = false;
+        const tableElement = renderTable();
+        if (tableElement) elements.push(tableElement);
+      }
+
+      // 代码块处理
+      if (line.startsWith("```")) {
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          codeBlockContent = "";
+          codeLanguage = line.replace("```", "").trim() || "plaintext";
+        } else {
+          inCodeBlock = false;
+          const currentCodeContent = codeBlockContent;
+          const currentLanguage = codeLanguage;
+
+          // 处理代码块中的``格式，保留原样
+          const processedCodeContent = currentCodeContent
+            .replace(/`/g, '`')
+            .replace(/\$/g, '$');
+
+          elements.push(
+            <div key={`code-${index}`} className="bg-gray-900 rounded-lg my-4 overflow-hidden relative group">
+              <div className="flex justify-between items-center px-4 py-2 bg-gray-800 border-b border-gray-700">
+                <span className="text-xs text-gray-400 uppercase font-mono">
+                  {currentLanguage}
+                </span>
+                <button
+                  onClick={() => copyToClipboard(currentCodeContent)}
+                  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded flex items-center gap-1"
+                  title="复制代码"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  复制
+                </button>
+              </div>
+              <SyntaxHighlighter
+                language={currentLanguage === "plaintext" ? "text" : currentLanguage}
+                style={vscDarkPlus}
+                customStyle={{
+                  margin: 0,
+                  padding: "16px",
+                  background: "transparent",
+                  fontSize: "14px",
+                }}
+                showLineNumbers={true}
+                wrapLines={true}
+              >
+                {processedCodeContent}
+              </SyntaxHighlighter>
+            </div>
+          );
+        }
+        return;
+      }
+
+      if (inCodeBlock) {
+        // 在代码块中，直接保留``和$符号原样
+        codeBlockContent += (codeBlockContent ? "\n" : "") + line;
+        return;
+      }
+
+      // 列表处理
+      if (line.match(/^(\s*)([-*+>]|\d+\.)\s+/) && !inCodeBlock && !inTable && !line.startsWith("> ")) {
+        const isOrdered = line.match(/^\s*\d+\. /);
+        const currentListType = isOrdered ? "ol" : "ul";
+
+        // 处理列表项中的内联格式
+        const listItemContent = line.replace(/^(\s*)([-*+>]|\d+\.)\s+/, "");
+        const processedContent = processInlineFormats(listItemContent);
+
+        const listItem = (
+          <li
+            key={listItems.length}
+            className="mb-1"
+            dangerouslySetInnerHTML={{ __html: processedContent }}
+          />
+        );
+
+        if (inList && listType === currentListType) {
+          // 继续当前列表
+          listItems.push(listItem);
+        } else {
+          // 结束上一个列表并开始新列表
+          if (inList) {
+            const listElement = renderList();
+            if (listElement) elements.push(listElement);
+          }
+          inList = true;
+          listType = currentListType;
+          listItems.push(listItem);
+        }
+        return;
+      }
+
+      // 如果不是列表项但之前在处理列表，则结束列表
+      if (inList && line.trim() && !line.startsWith("  ") && !line.startsWith("\t")) {
+        const listElement = renderList();
+        if (listElement) elements.push(listElement);
+      }
+
+      // 图片处理
+      if (line.match(/!\[(.*?)\]\((.*?)\)/)) {
+        const match = line.match(/!\[(.*?)\]\((.*?)\)/);
+        if (match) {
+          const altText = match[1];
+          const imgSrc = match[2];
+          elements.push(
+            <div key={index} className="my-4 flex justify-center">
+              <img
+                src={imgSrc}
+                alt={altText}
+                className="max-w-full h-auto rounded-lg border border-gray-700"
+                loading="lazy"
+              />
+            </div>
+          );
+        }
+        return;
+      }
+
+      // 内联格式处理 (粗体、斜体、链接、行内代码、脚注、上标、下标等)
+      if (line.match(/\*\*|\*|__|_|~~|==|\[.*\]\(.*\)|!\[.*\]\(.*\)|\^|_\{|\$\{|`/)) {
+        const processedLine = processInlineFormats(line);
+        elements.push(
+          <p
+            key={index}
+            className="mb-4 text-gray-300 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: processedLine }}
+          />
+        );
+        return;
+      }
+
+      // 标题处理
+      if (line.startsWith("# ")) {
+        const id = `heading-${headingIndex++}`;
+        const titleContent = processInlineFormats(line.replace("# ", ""));
+        elements.push(
+          <h1 key={index} id={id} className="text-3xl font-bold mb-4 text-white mt-8 first:mt-0" dangerouslySetInnerHTML={{ __html: titleContent }} />
+        );
+      } else if (line.startsWith("## ")) {
+        const id = `heading-${headingIndex++}`;
+        const titleContent = processInlineFormats(line.replace("## ", ""));
+        elements.push(
+          <h2 key={index} id={id} className="text-2xl font-bold mb-3 text-white mt-6" dangerouslySetInnerHTML={{ __html: titleContent }} />
+        );
+      } else if (line.startsWith("### ")) {
+        const id = `heading-${headingIndex++}`;
+        const titleContent = processInlineFormats(line.replace("### ", ""));
+        elements.push(
+          <h3 key={index} id={id} className="text-xl font-bold mb-2 text-white mt-4" dangerouslySetInnerHTML={{ __html: titleContent }} />
+        );
+      } else if (line.startsWith("#### ")) {
+        const id = `heading-${headingIndex++}`;
+        const titleContent = processInlineFormats(line.replace("#### ", ""));
+        elements.push(
+          <h4 key={index} id={id} className="text-lg font-bold mb-2 text-white mt-3" dangerouslySetInnerHTML={{ __html: titleContent }} />
+        );
+      }
+
+      // 分割线
+      else if (line.match(/^[-*_]{3,}$/)) {
+        elements.push(<hr key={index} className="my-6 border-gray-700" />);
+      }
+
+      // 引用
+      else if (line.startsWith("> ")) {
+        const quote = line.replace("> ", "");
+        const processedQuote = processInlineFormats(quote);
+        elements.push(
+          <blockquote key={index} className="border-l-4 border-[#3d85a9] pl-4 my-4 text-gray-400 italic" dangerouslySetInnerHTML={{ __html: processedQuote }} />
+        );
+        return;
+      }
+
+      // 普通段落
+      else if (line.trim() && !inList) {
+        const processedLine = processInlineFormats(line);
+        elements.push(
+          <p key={index} className="mb-4 text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: processedLine }} />
+        );
+      } else if (!line.trim() && elements.length > 0) {
+        elements.push(<br key={index} />);
+      }
+    });
+
+    // 处理最后可能未关闭的列表
+    if (inList) {
       const listElement = renderList();
       if (listElement) elements.push(listElement);
     }
 
-    // 图片处理
-    if (line.match(/!\[(.*?)\]\((.*?)\)/)) {
-      const match = line.match(/!\[(.*?)\]\((.*?)\)/);
-      if (match) {
-        const altText = match[1];
-        const imgSrc = match[2];
-        elements.push(
-          <div key={index} className="my-4 flex justify-center">
-            <img 
-              src={imgSrc} 
-              alt={altText} 
-              className="max-w-full h-auto rounded-lg border border-gray-700"
-              loading="lazy"
-            />
-          </div>
-        );
-      }
-      return;
+    // 处理最后可能未关闭的表格
+    if (inTable) {
+      const tableElement = renderTable();
+      if (tableElement) elements.push(tableElement);
     }
 
-    // 内联格式处理 (粗体、斜体、链接、行内代码、脚注、上标、下标等)
-    if (line.match(/\*\*|\*|__|_|~~|==|\[.*\]\(.*\)|!\[.*\]\(.*\)|\^|_\{|\$\{|`/)) {
-      const processedLine = processInlineFormats(line);
-      elements.push(
-        <p 
-          key={index} 
-          className="mb-4 text-gray-300 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: processedLine }}
-        />
-      );
-      return;
-    }
-
-    // 标题处理
-    if (line.startsWith("# ")) {
-      const id = `heading-${headingIndex++}`;
-      const titleContent = processInlineFormats(line.replace("# ", ""));
-      elements.push(
-        <h1 key={index} id={id} className="text-3xl font-bold mb-4 text-white mt-8 first:mt-0" dangerouslySetInnerHTML={{ __html: titleContent }} />
-      );
-    } else if (line.startsWith("## ")) {
-      const id = `heading-${headingIndex++}`;
-      const titleContent = processInlineFormats(line.replace("## ", ""));
-      elements.push(
-        <h2 key={index} id={id} className="text-2xl font-bold mb-3 text-white mt-6" dangerouslySetInnerHTML={{ __html: titleContent }} />
-      );
-    } else if (line.startsWith("### ")) {
-      const id = `heading-${headingIndex++}`;
-      const titleContent = processInlineFormats(line.replace("### ", ""));
-      elements.push(
-        <h3 key={index} id={id} className="text-xl font-bold mb-2 text-white mt-4" dangerouslySetInnerHTML={{ __html: titleContent }} />
-      );
-    } else if (line.startsWith("#### ")) {
-      const id = `heading-${headingIndex++}`;
-      const titleContent = processInlineFormats(line.replace("#### ", ""));
-      elements.push(
-        <h4 key={index} id={id} className="text-lg font-bold mb-2 text-white mt-3" dangerouslySetInnerHTML={{ __html: titleContent }} />
-      );
-    }
-
-    // 分割线
-    else if (line.match(/^[-*_]{3,}$/)) {
-      elements.push(<hr key={index} className="my-6 border-gray-700" />);
-    }
-
-    // 引用
-    else if (line.startsWith("> ")) {
-      const quote = line.replace("> ", "");
-      const processedQuote = processInlineFormats(quote);
-      elements.push(
-        <blockquote key={index} className="border-l-4 border-[#3d85a9] pl-4 my-4 text-gray-400 italic" dangerouslySetInnerHTML={{ __html: processedQuote }} />
-      );
-      return;
-    }
-
-    // 普通段落
-    else if (line.trim() && !inList) {
-      const processedLine = processInlineFormats(line);
-      elements.push(
-        <p key={index} className="mb-4 text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: processedLine }} />
-      );
-    } else if (!line.trim() && elements.length > 0) {
-      elements.push(<br key={index} />);
-    }
-  });
-
-  // 处理最后可能未关闭的列表
-  if (inList) {
-    const listElement = renderList();
-    if (listElement) elements.push(listElement);
-  }
-
-  // 处理最后可能未关闭的表格
-  if (inTable) {
-    const tableElement = renderTable();
-    if (tableElement) elements.push(tableElement);
-  }
-
-  return elements;
-};
+    return elements;
+  };
 
   if (loading) {
     return (
@@ -1028,11 +1009,10 @@ const renderMarkdown = (content: string) => {
         <div className="container mx-auto px-4 pt-20 pb-8 max-w-full overflow-x-hidden">
           {/* 文章列表视图 */}
           <div
-            className={`transition-all duration-300 ${
-              selectedArticle
-                ? "opacity-0 pointer-events-none absolute"
-                : "opacity-100"
-            } ${isTransitioning ? "scale-95" : "scale-100"}`}
+            className={`transition-all duration-300 ${selectedArticle
+              ? "opacity-0 pointer-events-none absolute"
+              : "opacity-100"
+              } ${isTransitioning ? "scale-95" : "scale-100"}`}
           >
             {/* 主要内容区域 - 左右布局 */}
             <div className="max-w-7xl mx-auto flex gap-4 h-[80vh]">
@@ -1048,25 +1028,23 @@ const renderMarkdown = (content: string) => {
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-between ${
-                          selectedCategory === category
-                            ? "bg-[#3d85a9] text-white shadow-lg"
-                            : "bg-[rgba(0,0,0,.2)] text-gray-300 hover:bg-[rgba(0,0,0,.4)] border border-[rgba(255,255,255,.05)]"
-                        }`}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-between ${selectedCategory === category
+                          ? "bg-[#3d85a9] text-white shadow-lg"
+                          : "bg-[rgba(0,0,0,.2)] text-gray-300 hover:bg-[rgba(0,0,0,.4)] border border-[rgba(255,255,255,.05)]"
+                          }`}
                       >
                         <span>{category}</span>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            selectedCategory === category
-                              ? "bg-[rgba(255,255,255,.2)] text-white"
-                              : "bg-[rgba(255,255,255,.1)] text-gray-400"
-                          }`}
+                          className={`text-xs px-2 py-1 rounded-full ${selectedCategory === category
+                            ? "bg-[rgba(255,255,255,.2)] text-white"
+                            : "bg-[rgba(255,255,255,.1)] text-gray-400"
+                            }`}
                         >
                           {category === "全部"
                             ? articles.length
                             : articles.filter(
-                                (article) => article.category === category
-                              ).length}
+                              (article) => article.category === category
+                            ).length}
                         </span>
                       </button>
                     ))}
@@ -1109,25 +1087,23 @@ const renderMarkdown = (content: string) => {
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                          selectedCategory === category
-                            ? "bg-[#3d85a9] text-white shadow-lg"
-                            : "bg-[rgba(0,0,0,.3)] text-gray-300 hover:bg-[rgba(0,0,0,.5)] border border-[rgba(255,255,255,.1)]"
-                        }`}
+                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${selectedCategory === category
+                          ? "bg-[#3d85a9] text-white shadow-lg"
+                          : "bg-[rgba(0,0,0,.3)] text-gray-300 hover:bg-[rgba(0,0,0,.5)] border border-[rgba(255,255,255,.1)]"
+                          }`}
                       >
                         {category}
                         <span
-                          className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                            selectedCategory === category
-                              ? "bg-[rgba(255,255,255,.2)] text-white"
-                              : "bg-[rgba(255,255,255,.1)] text-gray-400"
-                          }`}
+                          className={`ml-2 text-xs px-2 py-0.5 rounded-full ${selectedCategory === category
+                            ? "bg-[rgba(255,255,255,.2)] text-white"
+                            : "bg-[rgba(255,255,255,.1)] text-gray-400"
+                            }`}
                         >
                           {category === "全部"
                             ? articles.length
                             : articles.filter(
-                                (article) => article.category === category
-                              ).length}
+                              (article) => article.category === category
+                            ).length}
                         </span>
                       </button>
                     ))}
@@ -1267,10 +1243,9 @@ const renderMarkdown = (content: string) => {
                                     <div
                                       className="h-full bg-gradient-to-r from-[#3d85a9] to-[#1b2c55] rounded-full transition-all duration-300"
                                       style={{
-                                        width: `${
-                                          (count / blogStats.totalArticles) *
+                                        width: `${(count / blogStats.totalArticles) *
                                           100
-                                        }%`,
+                                          }%`,
                                       }}
                                     ></div>
                                   </div>
@@ -1290,20 +1265,17 @@ const renderMarkdown = (content: string) => {
                           📁 目录结构
                         </h4>
                         <div className="text-xs text-gray-300 font-mono leading-relaxed max-h-60">
-                          {blogStats?.directoryTree &&
-                          blogStats.directoryTree.length > 0 ? (
-        <div className="space-y-2">
-          {blogStats.directoryTree.map(
-            (item: DirectoryTreeItem, index: number) => (
-              <DirectoryItem
-                key={item.id || `${item.name}-${index}`}
-                item={item}
-                collapsedFolders={collapsedFolders}
-                toggleFolder={toggleFolder}
-              />
-            )
-          )}
-        </div>
+                          {blogStats?.directoryTree && blogStats.directoryTree.length > 0 ? (
+                            <div className="space-y-1">
+                              {blogStats.directoryTree.map((item: DirectoryTreeItem, index: number) => (
+                                <DirectoryItem
+                                  key={item.id || `${item.name}-${index}`}
+                                  item={item}
+                                  collapsedFolders={collapsedFolders}
+                                  toggleFolder={toggleFolder}
+                                />
+                              ))}
+                            </div>
                           ) : (
                             <div className="text-gray-500">暂无目录结构</div>
                           )}
@@ -1340,9 +1312,8 @@ const renderMarkdown = (content: string) => {
           {/* 文章详情视图 - 响应式优化 */}
           {selectedArticle && (
             <div
-              className={`transition-all bg-[rgba(0,0,0,.1)] duration-300 ease-out p-10 rounded-lg ${
-                isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
-              }`}
+              className={`transition-all bg-[rgba(0,0,0,.1)] duration-300 ease-out p-10 rounded-lg ${isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
+                }`}
             >
               <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-4 lg:gap-8">
                 {/* 文章内容 */}
@@ -1396,15 +1367,14 @@ const renderMarkdown = (content: string) => {
                                 <button
                                   key={item.id}
                                   onClick={() => scrollToHeading(item.id)}
-                                  className={`block w-full text-left py-2 px-2 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${
-                                    activeHeading === item.id
-                                      ? "text-[#214362] font-semibold"
-                                      : item.level === 1
+                                  className={`block w-full text-left py-2 px-2 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${activeHeading === item.id
+                                    ? "text-[#214362] font-semibold"
+                                    : item.level === 1
                                       ? "text-white font-medium"
                                       : item.level === 2
-                                      ? "text-gray-300 ml-4"
-                                      : "text-gray-400 ml-8"
-                                  }`}
+                                        ? "text-gray-300 ml-4"
+                                        : "text-gray-400 ml-8"
+                                    }`}
                                 >
                                   {activeHeading === item.id && (
                                     <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-[#214362] rounded-r"></span>
@@ -1428,15 +1398,14 @@ const renderMarkdown = (content: string) => {
                             <button
                               key={item.id}
                               onClick={() => scrollToHeading(item.id)}
-                              className={`block w-full text-left py-2 px-2 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${
-                                activeHeading === item.id
-                                  ? "text-[#1E2939] font-semibold pl-4"
-                                  : item.level === 1
+                              className={`block w-full text-left py-2 px-2 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${activeHeading === item.id
+                                ? "text-[#1E2939] font-semibold pl-4"
+                                : item.level === 1
                                   ? "text-white font-medium"
                                   : item.level === 2
-                                  ? "text-gray-300 ml-4"
-                                  : "text-gray-400 ml-8"
-                              }`}
+                                    ? "text-gray-300 ml-4"
+                                    : "text-gray-400 ml-8"
+                                }`}
                             >
                               {activeHeading === item.id && (
                                 <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-[#1E2939] rounded-r"></span>

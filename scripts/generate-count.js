@@ -73,45 +73,32 @@ function scanDirectory(dir, basePath = '', level = 0) {
   };
 }
 
-// 生成树形结构文本
-function generateTreeText(items, prefixes = [], isRoot = true) {
+// 生成树形结构文本 - 修复版本
+function generateTreeText(items, prefix = '', isLast = true, isRoot = true) {
   let result = '';
 
   items.forEach((item, index) => {
-    const isLast = index === items.length - 1;
-
-    // 构建当前行的前缀
-    let linePrefix = '';
-    if (!isRoot) {
-      linePrefix = prefixes.join('');
-    }
-
-    // 添加连接符
-    const connector = isLast ? '└── ' : '├── ';
+    const isLastItem = index === items.length - 1;
+    const currentPrefix = isRoot ? '' : prefix + (isLast ? '    ' : '│   ');
+    const connector = isRoot ? '' : (isLast ? '└── ' : '├── ');
 
     if (item.type === 'directory') {
-      result += `${linePrefix}${connector}${item.name}/\n`;
-
-      // 为子项目构建新的前缀
-      const newPrefixes = [...prefixes];
-      if (!isRoot) {
-        newPrefixes.push(isLast ? '    ' : '│   ');
-      }
-
+      result += `${currentPrefix}${connector}${item.name}/\n`;
+      
       // 递归处理子项目
       if (item.children && item.children.length > 0) {
-        result += generateTreeText(item.children, newPrefixes, false);
+        const newPrefix = isRoot ? '' : prefix + (isLast ? '    ' : '│   ');
+        result += generateTreeText(item.children, newPrefix, isLastItem, false);
       }
     } else {
-      // 只显示文件名，不显示标题描述
-      result += `${linePrefix}${connector}${item.name}\n`;
+      result += `${currentPrefix}${connector}${item.name}\n`;
     }
   });
 
   return result;
 }
 
-// 生成统计信息 - 修复文件计数问题
+// 生成统计信息
 function generateStats(items) {
   let totalFiles = 0;
   let totalDirs = 0;
@@ -239,13 +226,8 @@ function generateCountFile() {
     const result = scanDirectory(BLOGS_DIR);
     const stats = generateStats(result.items);
 
-    // 确保根目录名称正确
-    const rootItems = result.items.map(item => ({
-      ...item,
-      name: item.name === '..\\\\src\\\\blogs' ? 'blogs' : item.name
-    }));
-
-    const treeText = generateTreeText(rootItems, [], true);
+    // 生成目录树
+    const treeText = generateTreeText(result.items);
     const categoryTable = generateCategoryTable(stats.categoryStats);
     const articleList = generateArticleList(result.items);
 
@@ -263,7 +245,6 @@ function generateCountFile() {
 ## 📁 目录结构
 
 \`\`\`
-blogs/
 ${treeText}\`\`\`
 
 ## 📈 分类统计

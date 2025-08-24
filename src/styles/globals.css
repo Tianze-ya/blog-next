@@ -235,3 +235,14 @@ body {
   padding-top: calc(100vh - 100dvh + env(safe-area-inset-top, 0px));
   min-padding-top: env(safe-area-inset-top, 0px);
 }
+
+ol.custom-list {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+ol.custom-list::marker {
+  color: #9ca3af; /* 浅灰色 */
+  font-weight: 400;
+}

@@ -34,40 +34,36 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 function parseDirectoryStructure(structureText: string) {
-  console.log("原始目录结构文本:", structureText);
+  //console.log("原始目录结构文本\n", structureText);
 
   const lines = structureText.split("\n").filter((line) => line.trim());
   const tree: TreeItem[] = [];
   const stack: TreeItem[] = [];
 
   lines.forEach((line, lineIndex) => {
-    console.log(
-      `第${lineIndex}行: "${line}", 前导空格: ${
-        line.length - line.trimStart().length
-      }`
-    );
-
     const trimmedLine = line.trim();
-    if (!trimmedLine || trimmedLine === "blogs/") return;
-
-    // 计算缩进级别 - 每4个空格为一级
-    const leadingSpaces = line.length - line.trimStart().length;
-    const indentLevel = Math.floor(leadingSpaces / 4);
+    if (!trimmedLine) return;
+    let indentLevel = 0;
+    
+    // 计算树形符号的数量
+    // │, ├──, └── 都算作一级缩进
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '│' || line[i] === '├' || line[i] === '└') {
+        indentLevel++;
+      }
+    }
 
     // 判断是否为文件夹
     const isFolder = trimmedLine.endsWith("/");
 
-    // 提取名称
-    let name = trimmedLine.replace(/[└├─│\s]/g, "").replace(/\/$/, "");
-
-    // 处理文件名中的描述部分
-    if (!isFolder && name.includes(" - ")) {
-      name = name.split(" - ")[0];
-    }
+    // 提取名称 - 移除所有树形结构字符
+    let name = trimmedLine
+      .replace(/^[├└│─\s]+/, '')
+      .replace(/\/$/, '');
 
     if (!name) return;
 
-    const item = {
+    const item: TreeItem = {
       name,
       isFolder,
       level: indentLevel,
@@ -75,22 +71,20 @@ function parseDirectoryStructure(structureText: string) {
       id: `${name}-${indentLevel}-${lineIndex}`,
     };
 
-    console.log(`解析项目:`, item);
-
-    // 栈管理：移除级别大于等于当前级别的项目
+    // 找到正确的父级
     while (stack.length > 0 && stack[stack.length - 1].level >= indentLevel) {
       stack.pop();
     }
+    
+    // 调试输出
+    //console.log(`当前项目: ${name}, 级别: ${indentLevel}, 栈长度: ${stack.length}`);
 
-    // 添加到适当的父级
+    // 添加到适当的父级或根节点
     if (stack.length === 0) {
       tree.push(item);
     } else {
       const parent = stack[stack.length - 1];
       parent.children.push(item);
-      console.log(
-        `添加到父级 ${parent.name}, 父级现在有 ${parent.children.length} 个子项`
-      );
     }
 
     // 如果是文件夹，添加到栈中
@@ -99,7 +93,6 @@ function parseDirectoryStructure(structureText: string) {
     }
   });
 
-  console.log("最终解析结果:", JSON.stringify(tree, null, 2));
   return tree;
 }
 
