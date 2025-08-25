@@ -36,10 +36,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 function parseDirectoryStructure(structureText: string) {
   const lines = structureText.split("\n").filter((line) => line.trim());
-  let tree: TreeItem[] = [{ name: "root", isFolder: true, level: -1,filecount:0, children: [], id: "root-0-0" }];
+  const tree: TreeItem[] = [{ name: "root", isFolder: true, level: -1,filecount:0, children: [], id: "root-0-0" }];
   const result = parse_Folder(lines, tree[0], 0);
   if (result) {
-    let tree = result[0].children;
+    const tree = result[0].children;
     return tree;
   }
   return [];
@@ -47,8 +47,8 @@ function parseDirectoryStructure(structureText: string) {
 
 function parse_Folder(lines: string[], folder: TreeItem, lineIndex: number): [TreeItem, number] | false {
   for (let i = lineIndex; i < lines.length; i++) {
-    let line = lines[i];
-    let indentLevel = folder.level + 1;
+    const line = lines[i];
+    const indentLevel = folder.level + 1;
     const trimmedLine = line.trim();
     if (!trimmedLine) return false;
 
@@ -56,7 +56,7 @@ function parse_Folder(lines: string[], folder: TreeItem, lineIndex: number): [Tr
     const isFolder = trimmedLine.endsWith("/");
 
     // 提取名称 - 移除所有树形结构字符
-    let name = trimmedLine
+    const name = trimmedLine
       .replace(/^[├└│─\s]+/, '')
       .replace(/\/$/, '');
     if (!name) return false;
@@ -72,9 +72,9 @@ function parse_Folder(lines: string[], folder: TreeItem, lineIndex: number): [Tr
 
     // 递归处理子文件夹
     if (isFolder) {
-      let result = parse_Folder(lines, item, i + 1);
+      const result = parse_Folder(lines, item, i + 1);
       if (result) {
-        let [folderitem, count] = result;
+        const [folderitem, count] = result;
         folder.children.push(folderitem);
         folder.filecount += folderitem.filecount;
         i = count;
