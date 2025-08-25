@@ -20,7 +20,7 @@ cover:
 ==这是高亮文本==
 
 - `这是-列表` __something__
-* *这是\*列表*
+* __这是*列表__
 + ***这是+列表***
 1. ==这是有序列表==
 2. ~~这也是有序列表~~
@@ -34,6 +34,7 @@ cover:
 
 代码块：
 ```javascript
+# 注释
 function greet(name) {
     return `Hello, ${name}!`;
 }

@@ -380,31 +380,70 @@ export default function Blog() {
     return matchesSearch && matchesCategory;
   });
 
-  // 生成目录
+  // 生成目录 - 完全重写版本，正确处理代码块和注释块
   const generateTableOfContents = (content: string) => {
-    const headings = content.match(/^#{1,6}\s+.+$/gm) || [];
-    return headings.map((heading, index) => {
-      // 提取标题级别
-      const levelMatch = heading.match(/^#+/);
-      const level = levelMatch ? levelMatch[0].length : 1;
-
-      // 提取标题文本，处理可能的内联格式
-      const title = heading.replace(/^#+\s+/, "")
-        .replace(/\*\*(.*?)\*\*/g, '$1')  // 移除粗体标记
-        .replace(/\*(.*?)\*/g, '$1')      // 移除斜体标记
-        .replace(/`(.*?)`/g, '$1')        // 移除行内代码标记
-        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接标记
-        .trim();
-
-      // 生成唯一ID，考虑标题内容和位置
-      const id = `heading-${index}-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')}`;
-
-      return {
-        id,
-        title,
-        level,
-      };
-    });
+    // 分割内容为行
+    const lines = content.split("\n");
+    let inCodeBlock = false;
+    let inCommentBlock = false;
+    const headings: {id: string, title: string, level: number}[] = [];
+    
+    // 遍历所有行，检测标题但忽略代码块和注释块中的标题
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // 检测代码块开始/结束
+      if (line.trim().startsWith("```")) {
+        inCodeBlock = !inCodeBlock;
+        continue; // 跳过代码块标记行
+      }
+      
+      // 检测HTML注释开始/结束
+      if (line.trim().startsWith("<!--")) {
+        inCommentBlock = true;
+        continue; // 跳过注释开始行
+      }
+      
+      if (inCommentBlock && line.trim().endsWith("-->")) {
+        inCommentBlock = false;
+        continue; // 跳过注释结束行
+      }
+      
+      // 如果在代码块或注释块中，跳过该行
+      if (inCodeBlock || inCommentBlock) {
+        continue;
+      }
+      
+      // 检测标题行（不在代码块或注释块中）
+      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        let title = headingMatch[2]
+          .replace(/\*\*(.*?)\*\*/g, '$1')  // 移除粗体标记
+          .replace(/\*(.*?)\*/g, '$1')      // 移除斜体标记
+          .replace(/`(.*?)`/g, '$1')        // 移除行内代码标记
+          .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接标记
+          .trim();
+        
+        // 生成唯一ID，考虑标题内容和位置
+        const cleanTitle = title
+          .toLowerCase()
+          .replace(/\s+/g, '-') // 空格替换为连字符
+          .replace(/[^\w\u4e00-\u9fa5-]/g, '') // 保留字母、数字、中文和连字符
+          .replace(/-+/g, '-') // 合并多个连字符
+          .replace(/^-|-$/g, ''); // 移除首尾连字符
+          
+        const id = `heading-${headings.length}-${cleanTitle || `heading-${headings.length}`}`;
+        
+        headings.push({
+          id,
+          title,
+          level,
+        });
+      }
+    }
+    
+    return headings;
   };
 
   // 打开文章
@@ -468,9 +507,23 @@ export default function Blog() {
 
   // 创建一个处理内联格式的独立函数
   const processInlineFormats = (line: string): string => {
+    // 辅助函数：处理转义字符
+    const handleEscape = (text: string): string => {
+      return text.replace(/\\([`*_\[\]()#+\-.!{}\\|])/g, '$1');
+    };
     // 处理代码块和内联代码 - 优先处理
     if (line.includes('`')) {
-      line = line.replace(/`([^`]+)`/g, '<code class="bg-gray-700 text-gray-200 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+      // 处理转义的反引号
+      line = line.replace(/\\`/g, 'ESCAPED_BACKTICK');
+
+      // 处理内联代码，排除转义的反引号
+      line = line.replace(/`([^`]+)`/g, (match, content) => {
+        const escapedContent = handleEscape(content);
+        return `<code class="bg-gray-700 text-gray-200 px-1 py-0.5 rounded text-sm font-mono">${escapedContent}</code>`;
+      });
+
+      // 恢复转义的反引号
+      line = line.replace(/ESCAPED_BACKTICK/g, '`');
     }
 
     // 处理HTML标签
@@ -521,41 +574,73 @@ export default function Blog() {
     line = line.replace(/<mark>([^<]+)<\/mark>/g, '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">$1</mark>');
 
     // 处理粗体 **text** 和 __text__
-    line = line.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold">$1</strong>');
-    line = line.replace(/__([^_]+)__/g, '<strong class="font-bold">$1</strong>');
+    line = line.replace(/\*\*([^*]+)\*\*/g, (match, content) => {
+      const escapedContent = handleEscape(content);
+      return `<strong class="font-bold">${escapedContent}</strong>`;
+    });
+    line = line.replace(/__([^_]+)__/g, (match, content) => {
+      const escapedContent = handleEscape(content);
+      return `<strong class="font-bold">${escapedContent}</strong>`;
+    });
 
     // 处理斜体 *text* 和 _text_
-    line = line.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
-    line = line.replace(/_([^_]+)_/g, '<em class="italic">$1</em>');
+    line = line.replace(/\*([^*]+)\*/g, (match, content) => {
+      const escapedContent = handleEscape(content);
+      return `<em class="italic">${escapedContent}</em>`;
+    });
+    line = line.replace(/_([^_]+)_/g, (match, content) => {
+      const escapedContent = handleEscape(content);
+      return `<em class="italic">${escapedContent}</em>`;
+    });
 
     // 处理删除线 ~~text~~
-    line = line.replace(/~~([^~]+)~~/g, '<del class="line-through text-gray-500">$1</del>');
+    line = line.replace(/~~([^~]+)~~/g, (match, content) => {
+      const escapedContent = handleEscape(content);
+      return `<del class="line-through text-gray-500">${escapedContent}</del>`;
+    });
 
     // 处理高亮 ==text==
-    line = line.replace(/==([^=]+)==/g, '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">$1</mark>');
+    line = line.replace(/==([^=]+)==/g, (match, content) => {
+      const escapedContent = handleEscape(content);
+      return `<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">${escapedContent}</mark>`;
+    });
 
     // 处理裸链接 http:// or https:// or ftp://
     line = line.replace(
       /(?<!\()(https?|ftp):\/\/[^\s<>"]+/g,
-      '<a href="$&" class="text-[#3d85a9] hover:underline" target="_blank" rel="noopener noreferrer">$&</a>'
+      (match) => {
+        const escapedMatch = handleEscape(match);
+        return `<a href="${escapedMatch}" class="text-[#3d85a9] hover:underline" target="_blank" rel="noopener noreferrer">${escapedMatch}</a>`;
+      }
     );
 
     // 处理链接 [text](url)
     line = line.replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" class="text-[#3d85a9] hover:underline" target="_blank" rel="noopener noreferrer">$1</a>'
+      (match, text, url) => {
+        const escapedText = handleEscape(text);
+        const escapedUrl = handleEscape(url);
+        return `<a href="${escapedUrl}" class="text-[#3d85a9] hover:underline" target="_blank" rel="noopener noreferrer">${escapedText}</a>`;
+      }
     );
 
     // 处理图片 ![alt](src)
     line = line.replace(
       /!\[([^\]]+)\]\(([^)]+)\)/g,
-      '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg border border-gray-700 my-2" loading="lazy" />'
+      (match, alt, src) => {
+        const escapedAlt = handleEscape(alt);
+        const escapedSrc = handleEscape(src);
+        return `<img src="${escapedSrc}" alt="${escapedAlt}" class="max-w-full h-auto rounded-lg border border-gray-700 my-2" loading="lazy" />`;
+      }
     );
 
     // 处理脚注 [^note]
     line = line.replace(
       /\[\^([^\]]+)\]/g,
-      '<sup class="text-[#3d85a9] hover:underline cursor-pointer" title="脚注">[$1]</sup>'
+      (match, note) => {
+        const escapedNote = handleEscape(note);
+        return `<sup class="text-[#3d85a9] hover:underline cursor-pointer" title="脚注">[${escapedNote}]</sup>`;
+      }
     );
 
     // 处理上标 ^{text}
