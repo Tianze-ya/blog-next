@@ -418,7 +418,7 @@ export default function Blog() {
       const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
       if (headingMatch) {
         const level = headingMatch[1].length;
-        let title = headingMatch[2]
+        const title = headingMatch[2]
           .replace(/\*\*(.*?)\*\*/g, '$1')  // 移除粗体标记
           .replace(/\*(.*?)\*/g, '$1')      // 移除斜体标记
           .replace(/`(.*?)`/g, '$1')        // 移除行内代码标记
