@@ -488,7 +488,7 @@ export default function Works() {
                     </div>
                   </div>
 
-                  {!work.title.includes("wuxian") ? (
+                  {!work.title.includes("tianze") ? (
                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-2 md:pt-4">
                       {/* 查看详情按钮 */}
                       <button
@@ -506,7 +506,7 @@ export default function Works() {
                       </button>
 
                       {/* 原有的项目链接按钮 */}
-                      {!work.title.includes("wuxian") && work.link !== "#" && (
+                      {!work.title.includes("tianze") && work.link !== "#" && (
                         <>
                           <button
                             onClick={() => window.open(work.link, "_blank")}
@@ -524,7 +524,7 @@ export default function Works() {
                         </>
                       )}
 
-                      {!work.title.includes("wuxian") && work.download_url && (
+                      {!work.title.includes("tianze") && work.download_url && (
                         <>
                           <button
                             onClick={() =>
@@ -597,7 +597,7 @@ export default function Works() {
               <div className="flex justify-center gap-4 md:gap-6">
                 <button
                   onClick={() =>
-                    window.open("https://github.com/996wuxian", "_blank")
+                    window.open("https://github.com/Tianze-ya", "_blank")
                   }
                   className="bg-[rgba(0,0,0,.5)] hover:bg-[rgba(0,0,0,.7)] rounded-xl p-2 md:p-3 cursor-pointer transition-all duration-300 backdrop-blur-sm border border-[rgba(255,255,255,0.2)] group"
                 >

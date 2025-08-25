@@ -39,6 +39,7 @@ interface DirectoryTreeItem {
   name: string;
   isFolder: boolean;
   level: number;
+  filecount: number;
   children: DirectoryTreeItem[];
 }
 
@@ -88,7 +89,7 @@ const DirectoryItem = React.memo(
             <span className="text-yellow-400 mr-1.5">📁</span>
             <span className="text-gray-300 font-medium select-none">{item.name}</span>
             <span className="ml-auto text-xs text-gray-500 bg-[rgba(255,255,255,0.05)] px-1.5 py-0.5 rounded-full">
-              {item.children.length}
+              {item.filecount}
             </span>
           </div>
 
@@ -113,8 +114,8 @@ const DirectoryItem = React.memo(
           className="flex items-center rounded-md px-2 py-1 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200 group my-0.5"
           style={{ marginLeft: `${level * 16}px` }}
         >
-          <span className="text-blue-400 mr-1.5">📄</span>
-          <span className="text-gray-300 text-sm truncate max-w-[200px]">{item.name}</span>
+          <span className="text-blue-400 select-none mr-1.5">📄</span>
+          <span className="text-gray-300 select-none text-sm truncate max-w-[200px]">{item.name}</span>
         </div>
       );
     }
@@ -955,7 +956,7 @@ export default function Blog() {
   return (
     <>
       <Head>
-        <title>docs - wuxian&apos;s web</title>
+        <title>docs - tianze web</title>
         <meta name="description" content="分享开发经验和技术文章" />
         <meta
           name="viewport"
@@ -1260,10 +1261,10 @@ export default function Blog() {
                       </div>
 
                       {/* 目录结构 */}
-                      <div className="bg-[rgba(0,0,0,.2)] rounded-lg p-4 overflow-y-auto custom-scrollbar h-[150px]">
-                        <h4 className="text-sm font-medium text-[#fff] mb-3">
-                          📁 目录结构
-                        </h4>
+                      <h4 className="text-sm font-medium text-[#fff] mb-3">
+                        📁 目录结构
+                      </h4>
+                      <div className="bg-[rgba(0,0,0,.2)] rounded-lg p-4 overflow-y-auto custom-scrollbar h-[160px]">
                         <div className="text-xs text-gray-300 font-mono leading-relaxed max-h-60">
                           {blogStats?.directoryTree && blogStats.directoryTree.length > 0 ? (
                             <div className="space-y-1">
@@ -1309,7 +1310,7 @@ export default function Blog() {
             </button>
           )}
 
-          {/* 文章详情视图 - 响应式优化 */}
+          {/* 文章详情视图 - 响应式 */}
           {selectedArticle && (
             <div
               className={`transition-all bg-[rgba(0,0,0,.1)] duration-300 ease-out p-10 rounded-lg ${isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"

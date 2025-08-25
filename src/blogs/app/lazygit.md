@@ -16,6 +16,3 @@ brew install lazygit
 
 # Lazygit 按键绑定
 [Keybindings_zh-CN.md](https://github.com/jesseduffield/lazygit/blob/master/docs/keybindings/Keybindings_zh-CN.md)
-
-_图例：`<c-b>` 意味着ctrl+b, `<a-b>`意味着Alt+b, B 意味着shift+b_
-

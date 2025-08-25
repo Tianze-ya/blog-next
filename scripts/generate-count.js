@@ -73,25 +73,22 @@ function scanDirectory(dir, basePath = '', level = 0) {
   };
 }
 
-// 生成树形结构文本 - 修复版本
-function generateTreeText(items, prefix = '', isLast = true, isRoot = true) {
+// 生成树形结构文本
+function generateTreeText(items, prefix = '', isRoot = true) {
   let result = '';
 
   items.forEach((item, index) => {
     const isLastItem = index === items.length - 1;
-    const currentPrefix = isRoot ? '' : prefix + (isLast ? '    ' : '│   ');
-    const connector = isRoot ? '' : (isLast ? '└── ' : '├── ');
+    const connector = isRoot ? '' : (isLastItem ? '└── ' : '├── ');
+    
+    // 当前行的前缀
+    const linePrefix = isRoot ? '' : prefix;
+    result += `${linePrefix}${connector}${item.name}${item.type === 'directory' ? '/' : ''}\n`;
 
-    if (item.type === 'directory') {
-      result += `${currentPrefix}${connector}${item.name}/\n`;
-      
-      // 递归处理子项目
-      if (item.children && item.children.length > 0) {
-        const newPrefix = isRoot ? '' : prefix + (isLast ? '    ' : '│   ');
-        result += generateTreeText(item.children, newPrefix, isLastItem, false);
-      }
-    } else {
-      result += `${currentPrefix}${connector}${item.name}\n`;
+    // 如果是目录且有子项，递归处理
+    if (item.type === 'directory' && item.children && item.children.length > 0) {
+      const newPrefix = prefix + (isRoot ? '' : (isLastItem ? '    ' : '│   '));
+      result += generateTreeText(item.children, newPrefix, false);
     }
   });
 

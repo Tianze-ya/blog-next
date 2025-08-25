@@ -6,6 +6,7 @@ interface TreeItem {
   name: string;
   isFolder: boolean;
   level: number;
+  filecount: number;
   children: TreeItem[];
   id: string;
 }
@@ -34,24 +35,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 function parseDirectoryStructure(structureText: string) {
-  //console.log("原始目录结构文本\n", structureText);
-
   const lines = structureText.split("\n").filter((line) => line.trim());
-  const tree: TreeItem[] = [];
-  const stack: TreeItem[] = [];
+  let tree: TreeItem[] = [{ name: "root", isFolder: true, level: -1,filecount:0, children: [], id: "root-0-0" }];
+  const result = parse_Folder(lines, tree[0], 0);
+  if (result) {
+    let tree = result[0].children;
+    return tree;
+  }
+  return [];
+}
 
-  lines.forEach((line, lineIndex) => {
+function parse_Folder(lines: string[], folder: TreeItem, lineIndex: number): [TreeItem, number] | false {
+  for (let i = lineIndex; i < lines.length; i++) {
+    let line = lines[i];
+    let indentLevel = folder.level + 1;
     const trimmedLine = line.trim();
-    if (!trimmedLine) return;
-    let indentLevel = 0;
-    
-    // 计算树形符号的数量
-    // │, ├──, └── 都算作一级缩进
-    for (let i = 0; i < line.length; i++) {
-      if (line[i] === '│' || line[i] === '├' || line[i] === '└') {
-        indentLevel++;
-      }
-    }
+    if (!trimmedLine) return false;
 
     // 判断是否为文件夹
     const isFolder = trimmedLine.endsWith("/");
@@ -60,40 +59,38 @@ function parseDirectoryStructure(structureText: string) {
     let name = trimmedLine
       .replace(/^[├└│─\s]+/, '')
       .replace(/\/$/, '');
-
-    if (!name) return;
+    if (!name) return false;
 
     const item: TreeItem = {
       name,
       isFolder,
       level: indentLevel,
+      filecount: 0,
       children: [],
-      id: `${name}-${indentLevel}-${lineIndex}`,
+      id: `${name}-${indentLevel}-${i}`,
     };
 
-    // 找到正确的父级
-    while (stack.length > 0 && stack[stack.length - 1].level >= indentLevel) {
-      stack.pop();
-    }
-    
-    // 调试输出
-    //console.log(`当前项目: ${name}, 级别: ${indentLevel}, 栈长度: ${stack.length}`);
-
-    // 添加到适当的父级或根节点
-    if (stack.length === 0) {
-      tree.push(item);
-    } else {
-      const parent = stack[stack.length - 1];
-      parent.children.push(item);
-    }
-
-    // 如果是文件夹，添加到栈中
+    // 递归处理子文件夹
     if (isFolder) {
-      stack.push(item);
+      let result = parse_Folder(lines, item, i + 1);
+      if (result) {
+        let [folderitem, count] = result;
+        folder.children.push(folderitem);
+        folder.filecount += folderitem.filecount;
+        i = count;
+        if (line.match(/└/)) {
+          return [folder, i];
+        }
+      }
+    } else {
+      folder.filecount++;
+      folder.children.push(item);
+      if (line.match(/└/)) {
+        return [folder, i];
+      }
     }
-  });
-
-  return tree;
+  }
+  return [folder, 0];
 }
 
 function parseCountFile(content: string) {
@@ -108,7 +105,7 @@ function parseCountFile(content: string) {
 
   let inStructureSection = false;
   let inCategorySection = false;
-  let inCodeBlock = false; // 新增：跟踪是否在代码块内
+  let inCodeBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
