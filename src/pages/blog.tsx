@@ -58,11 +58,15 @@ const DirectoryItem = React.memo(
     level = 0,
     collapsedFolders,
     toggleFolder,
+    openArticle,
+    filteredArticles,
   }: {
     item: DirectoryTreeItem;
     level?: number;
     collapsedFolders: Set<string>;
     toggleFolder: (folderId: string) => void;
+    openArticle: (article: BlogArticle) => void;
+    filteredArticles: BlogArticle[];
   }) => {
     const isCollapsed = collapsedFolders.has(item.id);
 
@@ -102,6 +106,8 @@ const DirectoryItem = React.memo(
                   level={level + 1}
                   collapsedFolders={collapsedFolders}
                   toggleFolder={toggleFolder}
+                  openArticle={openArticle}
+                  filteredArticles={filteredArticles}
                 />
               ))}
             </div>
@@ -113,6 +119,14 @@ const DirectoryItem = React.memo(
         <div
           className="flex items-center rounded-md px-2 py-1 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200 group my-0.5"
           style={{ marginLeft: `${level * 16}px` }}
+          onClick={() => {
+            filteredArticles.forEach((article) => {
+              console.log(item);
+              if (article.filename === item.name+".md") {
+                openArticle(article);
+              }
+            })
+          }}
         >
           <span className="text-blue-400 select-none mr-1.5">📄</span>
           <span className="text-gray-300 select-none text-sm truncate max-w-[200px]">{item.name}</span>
@@ -386,34 +400,34 @@ export default function Blog() {
     const lines = content.split("\n");
     let inCodeBlock = false;
     let inCommentBlock = false;
-    const headings: {id: string, title: string, level: number}[] = [];
-    
+    const headings: { id: string, title: string, level: number }[] = [];
+
     // 遍历所有行，检测标题但忽略代码块和注释块中的标题
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // 检测代码块开始/结束
       if (line.trim().startsWith("```")) {
         inCodeBlock = !inCodeBlock;
         continue; // 跳过代码块标记行
       }
-      
+
       // 检测HTML注释开始/结束
       if (line.trim().startsWith("<!--")) {
         inCommentBlock = true;
         continue; // 跳过注释开始行
       }
-      
+
       if (inCommentBlock && line.trim().endsWith("-->")) {
         inCommentBlock = false;
         continue; // 跳过注释结束行
       }
-      
+
       // 如果在代码块或注释块中，跳过该行
       if (inCodeBlock || inCommentBlock) {
         continue;
       }
-      
+
       // 检测标题行（不在代码块或注释块中）
       const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
       if (headingMatch) {
@@ -424,7 +438,7 @@ export default function Blog() {
           .replace(/`(.*?)`/g, '$1')        // 移除行内代码标记
           .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接标记
           .trim();
-        
+
         // 生成唯一ID，考虑标题内容和位置
         const cleanTitle = title
           .toLowerCase()
@@ -432,9 +446,9 @@ export default function Blog() {
           .replace(/[^\w\u4e00-\u9fa5-]/g, '') // 保留字母、数字、中文和连字符
           .replace(/-+/g, '-') // 合并多个连字符
           .replace(/^-|-$/g, ''); // 移除首尾连字符
-          
+
         const id = `heading-${headings.length}-${cleanTitle || `heading-${headings.length}`}`;
-        
+
         headings.push({
           id,
           title,
@@ -442,7 +456,7 @@ export default function Blog() {
         });
       }
     }
-    
+
     return headings;
   };
 
@@ -1349,7 +1363,7 @@ export default function Blog() {
                       <h4 className="text-sm font-medium text-[#fff] mb-3">
                         📁 目录结构
                       </h4>
-                      <div className="bg-[rgba(0,0,0,.2)] rounded-lg p-4 overflow-y-auto custom-scrollbar h-[160px]">
+                      <div className="select-none bg-[rgba(0,0,0,.2)] rounded-lg p-4 overflow-y-auto custom-scrollbar h-[160px]">
                         <div className="text-xs text-gray-300 font-mono leading-relaxed max-h-60">
                           {blogStats?.directoryTree && blogStats.directoryTree.length > 0 ? (
                             <div className="space-y-1">
@@ -1359,6 +1373,8 @@ export default function Blog() {
                                   item={item}
                                   collapsedFolders={collapsedFolders}
                                   toggleFolder={toggleFolder}
+                                  openArticle={openArticle}
+                                  filteredArticles={filteredArticles}
                                 />
                               ))}
                             </div>
