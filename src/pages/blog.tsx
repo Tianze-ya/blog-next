@@ -121,7 +121,6 @@ const DirectoryItem = React.memo(
           style={{ marginLeft: `${level * 16}px` }}
           onClick={() => {
             filteredArticles.forEach((article) => {
-              console.log(item);
               if (article.filename === item.name+".md") {
                 openArticle(article);
               }
@@ -394,13 +393,26 @@ export default function Blog() {
     return matchesSearch && matchesCategory;
   });
 
-  // 生成目录 - 完全重写版本，正确处理代码块和注释块
+  // 简化的ID生成函数
+  const generateHeadingId = (title: string, index: number): string => {
+    const cleanTitle = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
+    
+    return `heading-${index}-${cleanTitle || index}`;
+  };
+
+  // 生成目录
   const generateTableOfContents = (content: string) => {
     // 分割内容为行
     const lines = content.split("\n");
     let inCodeBlock = false;
     let inCommentBlock = false;
+    let inMathBlock = false;
     const headings: { id: string, title: string, level: number }[] = [];
+    let headingCount = 0;
 
     // 遍历所有行，检测标题但忽略代码块和注释块中的标题
     for (let i = 0; i < lines.length; i++) {
@@ -410,6 +422,17 @@ export default function Blog() {
       if (line.trim().startsWith("```")) {
         inCodeBlock = !inCodeBlock;
         continue; // 跳过代码块标记行
+      }
+
+      // 检测数学公式块
+      if (line.trim().startsWith("$$")) {
+        inMathBlock = !inMathBlock;
+        continue;
+      }
+
+      // 如果在数学公式块中，跳过
+      if (inMathBlock) {
+        continue;
       }
 
       // 检测HTML注释开始/结束
@@ -439,15 +462,8 @@ export default function Blog() {
           .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接标记
           .trim();
 
-        // 生成唯一ID，考虑标题内容和位置
-        const cleanTitle = title
-          .toLowerCase()
-          .replace(/\s+/g, '-') // 空格替换为连字符
-          .replace(/[^\w\u4e00-\u9fa5-]/g, '') // 保留字母、数字、中文和连字符
-          .replace(/-+/g, '-') // 合并多个连字符
-          .replace(/^-|-$/g, ''); // 移除首尾连字符
-
-        const id = `heading-${headings.length}-${cleanTitle || `heading-${headings.length}`}`;
+        const id = generateHeadingId(title, headingCount);
+        headingCount++;
 
         headings.push({
           id,
@@ -492,7 +508,49 @@ export default function Blog() {
   const scrollToHeading = (headingId: string) => {
     const element = document.getElementById(headingId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      // 找到自定义滚动容器
+      const scrollContainer = document.querySelector(".custom-scrollbar") as HTMLElement;
+      
+      if (scrollContainer) {
+        // 使用自定义滚动容器
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest"
+          });
+          
+          // 添加顶部偏移
+          setTimeout(() => {
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+            const relativeTop = elementRect.top - containerRect.top;
+            const adjustedScrollTop = scrollContainer.scrollTop + relativeTop - 120;
+            
+            scrollContainer.scrollTo({
+              top: adjustedScrollTop,
+              behavior: "smooth"
+            });
+          }, 100);
+        }, 0);
+      } else {
+        // 回退到全局滚动
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest"
+          });
+          
+          setTimeout(() => {
+            const scrollY = window.scrollY || document.documentElement.scrollTop;
+            window.scrollTo({
+              top: scrollY - 120,
+              behavior: "smooth"
+            });
+          }, 100);
+        }, 0);
+      }
     }
   };
 
@@ -525,13 +583,46 @@ export default function Blog() {
     const handleEscape = (text: string): string => {
       return text.replace(/\\([`*_\[\]()#+\-.!{}\\|])/g, '$1');
     };
+
+    // 辅助函数：找出所有链接的位置范围
+    const findLinkRanges = (text: string): Array<{start: number, end: number}> => {
+      const ranges: Array<{start: number, end: number}> = [];
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      let match;
+      
+      while ((match = linkRegex.exec(text)) !== null) {
+        ranges.push({
+          start: match.index,
+          end: match.index + match[0].length
+        });
+      }
+      
+      return ranges;
+    };
+
+    // 辅助函数：检查指定位置是否在链接内部
+    const isInLink = (pos: number, ranges: Array<{start: number, end: number}>): boolean => {
+      return ranges.some(range => pos >= range.start && pos < range.end);
+    };
+
+    // 找出所有链接的位置范围
+    const linkRanges = findLinkRanges(line);
     // 处理代码块和内联代码 - 优先处理
     if (line.includes('`')) {
       // 处理转义的反引号
       line = line.replace(/\\`/g, 'ESCAPED_BACKTICK');
 
-      // 处理内联代码，排除转义的反引号
-      line = line.replace(/`([^`]+)`/g, (match, content) => {
+      // 处理内联代码，排除转义的反引号和链接内部的内容
+      line = line.replace(/`([^`]+)`/g, (match, content, offset) => {
+        // 检查这个内联代码是否在链接内部
+        const matchStart = offset;
+        const matchEnd = offset + match.length;
+        
+        // 如果在链接内部，则不处理
+        if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+          return match;
+        }
+        
         const escapedContent = handleEscape(content);
         return `<code class="bg-gray-700 text-gray-200 px-1 py-0.5 rounded text-sm font-mono">${escapedContent}</code>`;
       });
@@ -588,33 +679,87 @@ export default function Blog() {
     line = line.replace(/<mark>([^<]+)<\/mark>/g, '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">$1</mark>');
 
     // 处理粗体 **text** 和 __text__
-    line = line.replace(/\*\*([^*]+)\*\*/g, (match, content) => {
+    line = line.replace(/\*\*([^*]+)\*\*/g, (match, content, offset) => {
+      // 检查这个粗体是否在链接内部
+      const matchStart = offset;
+      const matchEnd = offset + match.length;
+      
+      // 如果在链接内部，则不处理
+      if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+        return match;
+      }
+      
       const escapedContent = handleEscape(content);
       return `<strong class="font-bold">${escapedContent}</strong>`;
     });
-    line = line.replace(/__([^_]+)__/g, (match, content) => {
+    line = line.replace(/__([^_]+)__/g, (match, content, offset) => {
+      // 检查这个粗体是否在链接内部
+      const matchStart = offset;
+      const matchEnd = offset + match.length;
+      
+      // 如果在链接内部，则不处理
+      if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+        return match;
+      }
+      
       const escapedContent = handleEscape(content);
       return `<strong class="font-bold">${escapedContent}</strong>`;
     });
 
     // 处理斜体 *text* 和 _text_
-    line = line.replace(/\*([^*]+)\*/g, (match, content) => {
+    line = line.replace(/\*([^*]+)\*/g, (match, content, offset) => {
+      // 检查这个斜体是否在链接内部
+      const matchStart = offset;
+      const matchEnd = offset + match.length;
+      
+      // 如果在链接内部，则不处理
+      if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+        return match;
+      }
+      
       const escapedContent = handleEscape(content);
       return `<em class="italic">${escapedContent}</em>`;
     });
-    line = line.replace(/_([^_]+)_/g, (match, content) => {
+    line = line.replace(/_([^_]+)_/g, (match, content, offset) => {
+      // 检查这个斜体是否在链接内部
+      const matchStart = offset;
+      const matchEnd = offset + match.length;
+      
+      // 如果在链接内部，则不处理
+      if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+        return match;
+      }
+      
       const escapedContent = handleEscape(content);
       return `<em class="italic">${escapedContent}</em>`;
     });
 
     // 处理删除线 ~~text~~
-    line = line.replace(/~~([^~]+)~~/g, (match, content) => {
+    line = line.replace(/~~([^~]+)~~/g, (match, content, offset) => {
+      // 检查这个删除线是否在链接内部
+      const matchStart = offset;
+      const matchEnd = offset + match.length;
+      
+      // 如果在链接内部，则不处理
+      if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+        return match;
+      }
+      
       const escapedContent = handleEscape(content);
       return `<del class="line-through text-gray-500">${escapedContent}</del>`;
     });
 
     // 处理高亮 ==text==
-    line = line.replace(/==([^=]+)==/g, (match, content) => {
+    line = line.replace(/==([^=]+)==/g, (match, content, offset) => {
+      // 检查这个高亮是否在链接内部
+      const matchStart = offset;
+      const matchEnd = offset + match.length;
+      
+      // 如果在链接内部，则不处理
+      if (isInLink(matchStart, linkRanges) || isInLink(matchEnd, linkRanges)) {
+        return match;
+      }
+      
       const escapedContent = handleEscape(content);
       return `<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">${escapedContent}</mark>`;
     });
@@ -957,31 +1102,39 @@ export default function Blog() {
         return;
       }
 
-      // 标题处理
-      if (line.startsWith("# ")) {
-        const id = `heading-${headingIndex++}`;
-        const titleContent = processInlineFormats(line.replace("# ", ""));
+      // 标题处理 - 使用与目录一致的ID生成
+      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const title = headingMatch[2]
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/`(.*?)`/g, '$1')
+          .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+          .trim();
+        
+        const id = generateHeadingId(title, headingIndex);
+        const titleContent = processInlineFormats(line.replace(/^(#{1,6})\s+/, ""));
+        
+        const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+        const classNames = {
+          1: "text-3xl font-bold mb-4 text-white mt-8 first:mt-0",
+          2: "text-2xl font-bold mb-3 text-white mt-6",
+          3: "text-xl font-bold mb-2 text-white mt-4",
+          4: "text-lg font-bold mb-2 text-white mt-3",
+          5: "text-base font-bold mb-2 text-white mt-2",
+          6: "text-sm font-bold mb-2 text-white mt-2"
+        };
+        
         elements.push(
-          <h1 key={index} id={id} className="text-3xl font-bold mb-4 text-white mt-8 first:mt-0" dangerouslySetInnerHTML={{ __html: titleContent }} />
+          React.createElement(Tag, {
+            key: index,
+            id,
+            className: classNames[level as keyof typeof classNames] || classNames[4],
+            dangerouslySetInnerHTML: { __html: titleContent }
+          })
         );
-      } else if (line.startsWith("## ")) {
-        const id = `heading-${headingIndex++}`;
-        const titleContent = processInlineFormats(line.replace("## ", ""));
-        elements.push(
-          <h2 key={index} id={id} className="text-2xl font-bold mb-3 text-white mt-6" dangerouslySetInnerHTML={{ __html: titleContent }} />
-        );
-      } else if (line.startsWith("### ")) {
-        const id = `heading-${headingIndex++}`;
-        const titleContent = processInlineFormats(line.replace("### ", ""));
-        elements.push(
-          <h3 key={index} id={id} className="text-xl font-bold mb-2 text-white mt-4" dangerouslySetInnerHTML={{ __html: titleContent }} />
-        );
-      } else if (line.startsWith("#### ")) {
-        const id = `heading-${headingIndex++}`;
-        const titleContent = processInlineFormats(line.replace("#### ", ""));
-        elements.push(
-          <h4 key={index} id={id} className="text-lg font-bold mb-2 text-white mt-3" dangerouslySetInnerHTML={{ __html: titleContent }} />
-        );
+        headingIndex++;
       }
 
       // 分割线
@@ -1414,116 +1567,74 @@ export default function Blog() {
           {/* 文章详情视图 - 响应式 */}
           {selectedArticle && (
             <div
-              className={`transition-all bg-[rgba(0,0,0,.1)] duration-300 ease-out p-10 rounded-lg ${isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
+              className={`transition-all duration-300 ease-out ${isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
                 }`}
             >
-              <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-4 lg:gap-8">
-                {/* 文章内容 */}
-                <div className="flex-1 order-2 lg:order-1">
-
-                  {/* 文章头部 */}
-                  <div className="mb-6 lg:mb-8">
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 lg:mb-4 leading-tight">
-                      {selectedArticle.filename}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-gray-300 mb-3 lg:mb-4 text-sm lg:text-base">
-                      <span>{selectedArticle.date}</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span>{selectedArticle.category}</span>
-                      <span className="hidden md:inline">•</span>
-                      <span className="hidden md:inline">
-                        {selectedArticle.filename}
-                      </span>
-                    </div>
-                  </div>
-
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex flex-col sm:flex-row gap-6 lg:gap-8">
                   {/* 文章内容 */}
-                  <div className="prose prose-invert max-w-none prose-sm lg:prose-base">
-                    {renderMarkdown(selectedArticle.content)}
-                  </div>
-                </div>
+                  <div className="flex-1 order-1">
 
-                {/* 目录 - 响应式处理 */}
-                {tableOfContents.length > 0 && (
-                  <div className="w-full max-w-[300px] order-1 lg:order-2 lg:sticky lg:top-20 lg:h-fit">
-                    <div className="bg-[rgba(0,0,0,.3)] rounded-lg p-3 lg:p-4 border border-[rgba(255,255,255,.1)]">
-                      <h3 className="text-base lg:text-lg font-bold text-white mb-3 lg:mb-4">
-                        目录
-                      </h3>
-                      <nav className="lg:block">
-                        {/* 移动端折叠目录 */}
-                        <div className="lg:hidden">
-                          <details className="group">
-                            <summary className="cursor-pointer text-sm text-gray-300 hover:text-white transition-colors list-none flex items-center justify-between">
-                              <span>展开目录</span>
-                              <SvgIcon
-                                name="down"
-                                width={16}
-                                height={16}
-                                color="#9CA3AF"
-                                className="group-open:rotate-180 transition-transform"
-                              />
-                            </summary>
-                            <div className="mt-2 max-h-60 overflow-y-auto custom-scrollbar overflow-x-hidden">
-                              {tableOfContents.map((item) => (
-                                <button
-                                  key={item.id}
-                                  onClick={() => scrollToHeading(item.id)}
-                                  className={`block w-full text-left py-2 px-2 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${activeHeading === item.id
-                                    ? "text-[#214362] font-semibold"
-                                    : item.level === 1
-                                      ? "text-white font-medium"
-                                      : item.level === 2
-                                        ? "text-gray-300 ml-4"
-                                        : "text-gray-400 ml-8"
-                                    }`}
-                                >
-                                  {activeHeading === item.id && (
-                                    <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-[#214362] rounded-r"></span>
-                                  )}
-                                  <span
-                                    className={
-                                      activeHeading === item.id ? "ml-3" : ""
-                                    }
-                                  >
-                                    {item.title}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </details>
-                        </div>
+                    {/* 文章头部 */}
+                    <div className="mb-6 lg:mb-8">
+                      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 lg:mb-4 leading-tight">
+                        {selectedArticle.filename}
+                      </h1>
+                      <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-gray-300 mb-3 lg:mb-4 text-sm lg:text-base">
+                        <span>{selectedArticle.date}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span>{selectedArticle.category}</span>
+                        <span className="hidden md:inline">•</span>
+                        <span className="hidden md:inline">
+                          {selectedArticle.filename}
+                        </span>
+                      </div>
+                    </div>
 
-                        {/* 桌面端展开目录 */}
-                        <div className="hidden lg:block">
-                          {tableOfContents.map((item) => (
-                            <button
-                              key={item.id}
-                              onClick={() => scrollToHeading(item.id)}
-                              className={`block w-full text-left py-2 px-2 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${activeHeading === item.id
-                                ? "text-[#1E2939] font-semibold pl-4"
-                                : item.level === 1
-                                  ? "text-white font-medium"
-                                  : item.level === 2
-                                    ? "text-gray-300 ml-4"
-                                    : "text-gray-400 ml-8"
-                                }`}
-                            >
-                              {activeHeading === item.id && (
-                                <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-[#1E2939] rounded-r"></span>
-                              )}
-                              <span
-                                className={activeHeading === item.id ? "" : ""}
-                              >
-                                {item.title}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </nav>
+                    {/* 文章内容 */}
+                    <div className="prose prose-invert max-w-none prose-sm lg:prose-base">
+                      {renderMarkdown(selectedArticle.content)}
                     </div>
                   </div>
-                )}
+
+                  {/* 目录 - 始终在右侧 */}
+                  {tableOfContents.length > 0 && (
+                    <div className="w-full max-w-[280px] sm:max-w-[300px] h-fit order-2">
+                      <div className="bg-[rgba(0,0,0,.3)] rounded-lg p-4 border border-[rgba(255,255,255,.1)]">
+                        <h3 className="text-base lg:text-lg font-bold text-white mb-4">
+                          目录
+                        </h3>
+                        <nav>
+                          <div className="space-y-1">
+                            {tableOfContents.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => scrollToHeading(item.id)}
+                                className={`block w-full text-left py-2 px-3 text-sm hover:bg-[rgba(255,255,255,.1)] rounded transition-colors relative ${activeHeading === item.id
+                                  ? "text-[#3d85a9] font-semibold"
+                                  : item.level === 1
+                                    ? "text-white font-medium"
+                                    : item.level === 2
+                                      ? "text-gray-300 ml-4"
+                                      : "text-gray-400 ml-8"
+                                  }`}
+                              >
+                                {activeHeading === item.id && (
+                                  <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-[#3d85a9] rounded-r"></span>
+                                )}
+                                <span
+                                  className={activeHeading === item.id ? "ml-3" : ""}
+                                >
+                                  {item.title}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </nav>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
